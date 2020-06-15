@@ -153,9 +153,9 @@ static NSString * const setRemoteSubStreamViewRotation = @"setRemoteSubStreamVie
         params.userSig = args[@"userSig"];
         params.role = [self numberToIntValue:args[@"role"]];
         NSString* streamId = args[@"streamId"];
-        if(![self isEmptyString:streamId]){
-            params.streamId = streamId;
-        }
+//        if(![self isEmptyString:streamId]){
+//            params.streamId = streamId;
+//        }
         int scene = [self numberToIntValue:args[@"scene"]];
         [self.trtc enterRoom:params appScene:scene];
         result(@(YES));
@@ -248,7 +248,7 @@ static NSString * const setRemoteSubStreamViewRotation = @"setRemoteSubStreamVie
         endParam.resMode = resMode;
         endParam.videoFps = videoFps;
         endParam.videoBitrate = videoBitrate;
-        endParam.enableAdjustRes = enableAdjustRes;
+//        endParam.enableAdjustRes = enableAdjustRes;
         [self.trtc setVideoEncoderParam:endParam];
     }else if ([setNetworkQosParam isEqualToString:call.method]) {
         int preference = [self numberToIntValue:args[@"preference"]];
@@ -290,7 +290,7 @@ static NSString * const setRemoteSubStreamViewRotation = @"setRemoteSubStreamVie
     }else if ([setRemoteSubStreamViewRotation isEqualToString:call.method]) {
         NSString * userId = args[@"userId"];
         int rotation = [self numberToIntValue:args[@"rotation"]];
-        [self.trtc setRemoteSubStreamViewRotation:userId rotation:rotation];
+//        [self.trtc setRemoteSubStreamViewRotation:userId rotation:rotation];
     }else if ([@"init" isEqualToString:call.method]) {
             [self disposeAllPlayers];
             result(nil);

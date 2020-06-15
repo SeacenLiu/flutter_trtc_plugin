@@ -27,7 +27,7 @@
         self.videoEncConfig.videoResolution = TRTCVideoResolution_640_360;
         self.videoEncConfig.videoBitrate = scene == TRTCAppSceneLIVE ? 750 : 500;
         if (scene == TRTCAppSceneVideoCall) {
-            self.videoEncConfig.enableAdjustRes = YES;
+//            self.videoEncConfig.enableAdjustRes = YES;
         }
         self.smallVideoEncConfig = [[TRTCVideoEncParam alloc] init];
         self.smallVideoEncConfig.videoResolution = TRTCVideoResolution_160_90;

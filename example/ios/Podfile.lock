@@ -5,7 +5,7 @@ PODS:
     - TXLiteAVSDK_Professional
   - fluttertoast (0.0.2):
     - Flutter
-  - TXLiteAVSDK_Professional (7.2.8932)
+  - TXLiteAVSDK_Professional (6.8.7969)
 
 DEPENDENCIES:
   - Flutter (from `Flutter`)
@@ -28,8 +28,8 @@ SPEC CHECKSUMS:
   Flutter: 0e3d915762c693b495b44d77113d4970485de6ec
   flutter_trtc_plugin: 54820c411d37c40c5956127b6786f0d2cb57c08b
   fluttertoast: b644586ef3b16f67fae9a1f8754cef6b2d6b634b
-  TXLiteAVSDK_Professional: a93f4d5fbc38382906ce4b38560b08d5b3b9a192
+  TXLiteAVSDK_Professional: a6fe4a2981dc8479d06675739bc3b6d4196eb17c
 
 PODFILE CHECKSUM: 7a7d2d15369dc603969f3d558d1da5d278290494
 
-COCOAPODS: 1.8.4
+COCOAPODS: 1.9.1

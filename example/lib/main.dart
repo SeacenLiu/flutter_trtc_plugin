@@ -14,8 +14,8 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   HashMap<String, int> _viewIdMap = HashMap<String, int>();
   HashMap<String, Widget> _widgetMap = HashMap<String, Widget>();
-  int _sdkAppId = 1400324442;
-  String _secretKey = 'dcfa262b7ccac8e29e163c8d824138ebb6530331ff625d9e21305259a35714ac';
+  int _sdkAppId = 1400384163;
+  String _secretKey = 'b005f225bd2051f6a7fd3d7f89deb62275342a81a767d04454db91a6943e1215';
 
   String _currentUserId;
   String _userSig;
