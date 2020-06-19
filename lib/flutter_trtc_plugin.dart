@@ -18,3 +18,5 @@ export 'controller/download_controller.dart';
 export 'controller/tencent_player_controller.dart';
 
 export 'view/tencent_player.dart';
+
+export 'src/trtc_stream.dart';

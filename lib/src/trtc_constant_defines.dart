@@ -140,3 +140,26 @@ class TrtcUserQuality {
 
   TrtcUserQuality(this.userId, this.quality);
 }
+
+/**
+ * 1.3 视频流类型
+ *
+ * TRTC 内部有三种不同的音视频流，分别是：
+ * - 主画面：最常用的一条线路，一般用来传输摄像头的视频数据。
+ * - 小画面：跟主画面的内容相同，但是分辨率和码率更低。
+ * - 辅流画面：一般用于屏幕分享，以及远程播片（例如老师放一段视频给学生）。
+ *
+ * @note - 如果主播的上行网络和性能比较好，则可以同时送出大小两路画面。
+ * @note - SDK 不支持单独开启小画面，小画面必须依附于主画面而存在。
+ */
+// 视频流类型
+class TRTCVideoStreamType {
+  /// 主画面视频流：最常用的一条线路，一般用来传输摄像头的视频数据。
+  static const int TRTC_VIDEO_STREAM_TYPE_BIG = 0;
+
+  /// 小画面视频流：跟主画面的内容相同，但是分辨率和码率更低。
+  static const int TRTC_VIDEO_STREAM_TYPE_SMALL = 1;
+
+  /// 辅流画面（屏幕分享）：一般用于屏幕分享，以及远程播片（例如老师放一段视频给学生）。
+  static const int TRTC_VIDEO_STREAM_TYPE_SUB = 2;
+}

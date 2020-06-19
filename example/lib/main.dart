@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_trtc_plugin_example/video_chat_test/video_chat_page.dart';
+import 'package:flutter_trtc_plugin_example/live_test/live_anchor_page.dart';
 
 void main() => runApp(MyApp());
 
@@ -39,6 +40,19 @@ class HomePage extends StatelessWidget {
                 );
               },
               child: Text("视频聊天"),
+            ),
+            FlatButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (BuildContext context) {
+                      return LiveAnchorPage();
+                    },
+                  ),
+                );
+              },
+              child: Text("我要直播"),
             ),
           ],
         ),

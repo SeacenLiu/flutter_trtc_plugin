@@ -49,7 +49,9 @@ static NSString * const startRemoteSubStreamView = @"startRemoteSubStreamView";/
 static NSString * const stopRemoteSubStreamView = @"stopRemoteSubStreamView";/**  停止显示远端用户的屏幕分享画面。*/
 static NSString * const setRemoteSubStreamViewFillMode = @"setRemoteSubStreamViewFillMode";/**  设置屏幕分享画面的显示模式。*/
 static NSString * const setRemoteSubStreamViewRotation = @"setRemoteSubStreamViewRotation";/**  设置屏幕分享画面的顺时针旋转角度。*/
-
+// seacenliu: 互动直播新添加
+static NSString * const startPublishing = @"startPublishing";/** 开始推流 */
+static NSString * const stopPublish = @"stopPublish";/** 停止推流 */
 
 
 @interface FlutterTrtcPlugin()<TRTCCloudDelegate,FlutterStreamHandler>
@@ -153,9 +155,9 @@ static NSString * const setRemoteSubStreamViewRotation = @"setRemoteSubStreamVie
         params.userSig = args[@"userSig"];
         params.role = [self numberToIntValue:args[@"role"]];
         NSString* streamId = args[@"streamId"];
-//        if(![self isEmptyString:streamId]){
-//            params.streamId = streamId;
-//        }
+        if(![self isEmptyString:streamId]){
+            params.streamId = streamId;
+        }
         int scene = [self numberToIntValue:args[@"scene"]];
         [self.trtc enterRoom:params appScene:scene];
         result(@(YES));
@@ -248,7 +250,7 @@ static NSString * const setRemoteSubStreamViewRotation = @"setRemoteSubStreamVie
         endParam.resMode = resMode;
         endParam.videoFps = videoFps;
         endParam.videoBitrate = videoBitrate;
-//        endParam.enableAdjustRes = enableAdjustRes;
+        endParam.enableAdjustRes = enableAdjustRes;
         [self.trtc setVideoEncoderParam:endParam];
     }else if ([setNetworkQosParam isEqualToString:call.method]) {
         int preference = [self numberToIntValue:args[@"preference"]];
@@ -290,58 +292,63 @@ static NSString * const setRemoteSubStreamViewRotation = @"setRemoteSubStreamVie
     }else if ([setRemoteSubStreamViewRotation isEqualToString:call.method]) {
         NSString * userId = args[@"userId"];
         int rotation = [self numberToIntValue:args[@"rotation"]];
-//        [self.trtc setRemoteSubStreamViewRotation:userId rotation:rotation];
+        //        [self.trtc setRemoteSubStreamViewRotation:userId rotation:rotation];
     }else if ([@"init" isEqualToString:call.method]) {
-            [self disposeAllPlayers];
-            result(nil);
-        }else if([@"create" isEqualToString:call.method]){
-            NSLog(@"FLTVideo  create");
-            [self disposeAllPlayers];
-            FLTFrameUpdater* frameUpdater = [[FLTFrameUpdater alloc] initWithRegistry:_registry];
-    //        FLTVideoPlayer*
-            player= [[FLTVideoPlayer alloc] initWithCall:call frameUpdater:frameUpdater registry:_registry messenger:_messenger];
-            if (player) {
-                [self onPlayerSetup:player frameUpdater:frameUpdater result:result];
-            }
-            result(nil);
-        }else if([@"download" isEqualToString:call.method]){
-            
-             NSDictionary* argsMap = call.arguments;
-             NSString* urlOrFileId = argsMap[@"urlOrFileId"];
-            NSLog(@"下载相关   startdownload  %@", urlOrFileId);
-            
-            NSString* channelUrl =[NSString stringWithFormat:@"flutter_trtc_plugin_download_event%@",urlOrFileId];
-            NSLog(@"%@", channelUrl);
-            FlutterEventChannel* eventChannel = [FlutterEventChannel
-                                                 eventChannelWithName:channelUrl
-                                                 binaryMessenger:_messenger];
-           FLTDownLoadManager* downLoadManager = [[FLTDownLoadManager alloc] initWithMethodCall:call result:result];
-           [eventChannel setStreamHandler:downLoadManager];
-           downLoadManager.eventChannel =eventChannel;
-           [downLoadManager downLoad];
-           
-           _downLoads[urlOrFileId] = downLoadManager;
-           NSLog(@"下载相关   start 数组大小  %lu", (unsigned long)_downLoads.count);
-            
-            
-            result(nil);
-        }else if([@"stopDownload" isEqualToString:call.method]){
-            NSDictionary* argsMap = call.arguments;
-            NSString* urlOrFileId = argsMap[@"urlOrFileId"];
-            NSLog(@"下载相关    stopDownload  %@", urlOrFileId);
-            FLTDownLoadManager* downLoadManager =   _downLoads[urlOrFileId];
-            if(downLoadManager!=nil){
-               [downLoadManager stopDownLoad];
-            }else{
-                NSLog(@"下载相关   对象为空  %lu", (unsigned long)_downLoads.count);
-            }
-            
-            
-           
-            result(nil);
-        }else if([@"play" isEqualToString:call.method]||[@"pause" isEqualToString:call.method]||[@"seekTo" isEqualToString:call.method]||[@"setRate" isEqualToString:call.method]||[@"setBitrateIndex" isEqualToString:call.method]||[@"dispose" isEqualToString:call.method]){
-            [self onMethodCall:call result:result];
-        }else {
+        [self disposeAllPlayers];
+        result(nil);
+    }else if([@"create" isEqualToString:call.method]){
+        NSLog(@"FLTVideo  create");
+        [self disposeAllPlayers];
+        FLTFrameUpdater* frameUpdater = [[FLTFrameUpdater alloc] initWithRegistry:_registry];
+        //        FLTVideoPlayer*
+        player= [[FLTVideoPlayer alloc] initWithCall:call frameUpdater:frameUpdater registry:_registry messenger:_messenger];
+        if (player) {
+            [self onPlayerSetup:player frameUpdater:frameUpdater result:result];
+        }
+        result(nil);
+    }else if([@"download" isEqualToString:call.method]){
+        
+        NSDictionary* argsMap = call.arguments;
+        NSString* urlOrFileId = argsMap[@"urlOrFileId"];
+        NSLog(@"下载相关   startdownload  %@", urlOrFileId);
+        
+        NSString* channelUrl =[NSString stringWithFormat:@"flutter_trtc_plugin_download_event%@",urlOrFileId];
+        NSLog(@"%@", channelUrl);
+        FlutterEventChannel* eventChannel = [FlutterEventChannel
+                                             eventChannelWithName:channelUrl
+                                             binaryMessenger:_messenger];
+        FLTDownLoadManager* downLoadManager = [[FLTDownLoadManager alloc] initWithMethodCall:call result:result];
+        [eventChannel setStreamHandler:downLoadManager];
+        downLoadManager.eventChannel =eventChannel;
+        [downLoadManager downLoad];
+        
+        _downLoads[urlOrFileId] = downLoadManager;
+        NSLog(@"下载相关   start 数组大小  %lu", (unsigned long)_downLoads.count);
+        
+        result(nil);
+    }else if([@"stopDownload" isEqualToString:call.method]){
+        NSDictionary* argsMap = call.arguments;
+        NSString* urlOrFileId = argsMap[@"urlOrFileId"];
+        NSLog(@"下载相关    stopDownload  %@", urlOrFileId);
+        FLTDownLoadManager* downLoadManager =   _downLoads[urlOrFileId];
+        if(downLoadManager!=nil){
+            [downLoadManager stopDownLoad];
+        }else{
+            NSLog(@"下载相关   对象为空  %lu", (unsigned long)_downLoads.count);
+        }
+        
+        result(nil);
+    }else if([@"play" isEqualToString:call.method]||[@"pause" isEqualToString:call.method]||[@"seekTo" isEqualToString:call.method]||[@"setRate" isEqualToString:call.method]||[@"setBitrateIndex" isEqualToString:call.method]||[@"dispose" isEqualToString:call.method]){
+        [self onMethodCall:call result:result];
+    }else if ([startPublishing isEqualToString:call.method]) {
+        NSString *streamId = args[@"streamId"];
+        int type = [[args objectForKey:@"type"] intValue];
+        [self.trtc startPublishing:streamId type:type];
+        result(nil);
+    }else if ([stopPublish isEqualToString:call.method]) {
+        [self.trtc stopPublishing];
+        result(nil);
+    }else {
         result(FlutterMethodNotImplemented);
     }
 }
@@ -349,13 +356,13 @@ static NSString * const setRemoteSubStreamViewRotation = @"setRemoteSubStreamVie
 -(void) onMethodCall:(FlutterMethodCall*)call result:(FlutterResult)result{
     
     NSDictionary* argsMap = call.arguments;
-   // int64_t textureId = ((NSNumber*)argsMap[@"textureId"]).unsignedIntegerValue;
+    // int64_t textureId = ((NSNumber*)argsMap[@"textureId"]).unsignedIntegerValue;
     if([NSNull null]==argsMap[@"textureId"]) {
         return;
     }
     int64_t textureId = ((NSNumber*)argsMap[@"textureId"]).unsignedIntegerValue;
-//    FLTVideoPlayer* player = _players[@(textureId)];
-
+    //    FLTVideoPlayer* player = _players[@(textureId)];
+    
     if([@"play" isEqualToString:call.method]){
         [player resume];
         result(nil);
@@ -382,9 +389,9 @@ static NSString * const setRemoteSubStreamViewRotation = @"setRemoteSubStreamVie
         [player setBitrateIndex:index];
         result(nil);
     }else if([@"dispose" isEqualToString:call.method]){
-         NSLog(@"FLTVideo  dispose   ----   ");
+        NSLog(@"FLTVideo  dispose   ----   ");
         [_registry unregisterTexture:textureId];
-       // [_players removeObjectForKey:@(textureId)];
+        // [_players removeObjectForKey:@(textureId)];
         //_players= nil;
         [self disposeAllPlayers];
         result(nil);
@@ -397,13 +404,13 @@ static NSString * const setRemoteSubStreamViewRotation = @"setRemoteSubStreamVie
 - (void)onPlayerSetup:(FLTVideoPlayer*)player
          frameUpdater:(FLTFrameUpdater*)frameUpdater
                result:(FlutterResult)result {
-//    _players[@(player.textureId)] = player;
+    //    _players[@(player.textureId)] = player;
     result(@{@"textureId" : @(player.textureId)});
     
 }
 
 -(void) disposeAllPlayers{
-     NSLog(@"FLTVideo 初始化播放器状态----------");
+    NSLog(@"FLTVideo 初始化播放器状态----------");
     // Allow audio playback when the Ring/Silent switch is set to silent
     [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryPlayback error:nil];
     if(player){
@@ -486,7 +493,7 @@ static NSString * const setRemoteSubStreamViewRotation = @"setRemoteSubStreamVie
         NSMutableDictionary * localQualityDic = [[NSMutableDictionary alloc]init];
         [localQualityDic setValue:!localQuality.userId ? localQuality.userId : @"" forKey:@"userId"];
         [localQualityDic setValue:!localQuality.quality ? @(localQuality.quality) : @(0) forKey:@"quality"];
-    
+        
         sink(@{@"method": @{@"name": @"onNetworkQuality",@"localQuality": localQualityDic,@"remoteQuality":remoteQualityList}});
     }
 }
