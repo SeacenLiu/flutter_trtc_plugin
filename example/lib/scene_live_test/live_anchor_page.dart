@@ -19,7 +19,7 @@ class _LiveAnchorPageState extends State<LiveAnchorPage> {
   int _sdkAppId = 1400384163;
   String _secretKey =
       'b005f225bd2051f6a7fd3d7f89deb62275342a81a767d04454db91a6943e1215';
-  int _roomId = 58994078;
+  int _roomId = 19971231;//58994078;
 
   @override
   Widget build(BuildContext context) {
@@ -83,7 +83,7 @@ class _LiveAnchorPageState extends State<LiveAnchorPage> {
                 // 进入房间
                 TrtcRoom.enterRoom(_sdkAppId, _currentUserId, _userSig, _roomId,
                     TrtcAppScene.TRTC_APP_SCENE_LIVE);
-                String streamId = 'seacenliu';
+                String streamId = 'seacenliu-stream';
                 int type = TRTCVideoStreamType.TRTC_VIDEO_STREAM_TYPE_BIG;
                 TrtcStream.startPublishing(streamId, type);
               },

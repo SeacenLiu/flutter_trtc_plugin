@@ -42,6 +42,7 @@ class TRTCLiveUserInfo {
   String streamId;
   bool isOwner;
 
+  // TODO: - 这里可能需要使用 TIMUserProfile 进行接入
   TRTCLiveUserInfo(this.userId, this.userName, this.avatarURL,
       {this.streamId = "", this.isOwner = false});
 }

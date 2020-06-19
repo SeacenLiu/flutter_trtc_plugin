@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_trtc_plugin_example/video_chat_test/video_chat_page.dart';
-import 'package:flutter_trtc_plugin_example/live_test/live_anchor_page.dart';
+import 'package:flutter_trtc_plugin_example/scene_live_test/live_anchor_page.dart';
 
 void main() => runApp(MyApp());
 
