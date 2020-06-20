@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_trtc_plugin_example/live_test/live_list_page.dart';
 import 'package:flutter_trtc_plugin_example/video_chat_test/video_chat_page.dart';
 import 'package:flutter_trtc_plugin_example/scene_live_test/live_anchor_page.dart';
 
@@ -28,6 +29,19 @@ class HomePage extends StatelessWidget {
       body: Center(
         child: Column(
           children: <Widget>[
+            FlatButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (BuildContext context) {
+                      return LiveListPage();
+                    },
+                  ),
+                );
+              },
+              child: Text("简易直播"),
+            ),
             FlatButton(
               onPressed: () {
                 Navigator.push(
