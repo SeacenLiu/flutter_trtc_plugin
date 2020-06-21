@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
+import 'dart:collection';
 import 'package:flutter_trtc_plugin/flutter_trtc_plugin.dart';
 import 'package:flutter_trtc_plugin_example/live_test/live_room_manager.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'dart:collection';
 
-class LivePushPage extends StatefulWidget {
+class LivePlayPage extends StatefulWidget {
   String roomId;
   String userId;
 
-  LivePushPage({Key key, @required this.roomId, this.userId}) : super(key: key);
+  LivePlayPage({Key key, @required this.roomId, this.userId}) : super(key: key);
 
   @override
-  State<StatefulWidget> createState() => _LivePushPageState();
+  State<StatefulWidget> createState() => _LivePlayPageState();
 }
 
-class _LivePushPageState extends State<LivePushPage> {
+class _LivePlayPageState extends State<LivePlayPage> {
   String _userSig = "";
   int _sdkAppId = 1400384163;
   String _secretKey =
@@ -24,81 +24,69 @@ class _LivePushPageState extends State<LivePushPage> {
   // UserId: UIKitView
   HashMap<String, Widget> _widgetMap = HashMap<String, Widget>();
 
+  String roomOwner;
+
   @override
   void initState() {
+    // 房主的uid就是房间id
+    roomOwner = widget.roomId;
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          title: Text("主播端"),
-        ),
-        body: Stack(
-          children: <Widget>[
-            Positioned(
-              top: 0,
-              bottom: 240,
-              left: 0,
-              right: 0,
-              child: _renderWidget(),
-            ),
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: FlatButton(
-                onPressed: () async {
-                  String userId = widget.userId;
-                  int roomId = int.parse(widget.roomId);
-                  // 获取 UserSig
-                  _userSig =
-                      await TrtcBase.getUserSig(_sdkAppId, _secretKey, userId);
-                  showTips('获取UserSig成功');
-                  // 初始化 SDK
-                  TrtcBase.sharedInstance();
-                  // 设置监听
-                  TrtcBase.registerCallback(
-                    onError: _onError,
-                    onWarning: _onWarning,
-                    onEnterRoom: _onEnterRoom,
-                    onExitRoom: _onExitRoom,
-                    onRemoteUserEnterRoom: _onRemoteUserEnterRoom,
-                    onRemoteUserLeaveRoom: _onRemoteUserLeaveRoom,
-                    onUserVideoAvailable: _onUserVideoAvailable,
-                    onUserAudioAvailable: _onUserAudioAvailable,
-                    onConnectionLost: _onConnectionLost,
-                    onTryToReconnect: _onTryToReconnect,
-                    onConnectionRecovery: _onConnectionRecovery,
-                    onTrtcViewClick: (viewId) {
-                      showTips('$viewId被点击');
-                    },
-                  );
-                  // 打开麦克风和摄像头
-                  TrtcAudio.startLocalAudio();
-                  Widget localView =
-                      TrtcVideo.createPlatformView(userId, (viewId) {
-                    _viewIdMap[userId] = viewId;
-                    TrtcVideo.setLocalViewFillMode(
-                        TrtcVideoRenderMode.TRTC_VIDEO_RENDER_MODE_FILL);
-                    TrtcVideo.startLocalPreview(true, _viewIdMap[userId]);
-                  });
-                  _widgetMap[userId] = localView;
-                  // 进入房间
-                  TrtcRoom.enterRoom(_sdkAppId, userId, _userSig, roomId,
-                      TrtcAppScene.TRTC_APP_SCENE_LIVE,
-                      role: TrtcRole.TRTC_ROLE_ANCHOR);
-                  // 创建直播间
-                  LiveRoomManager.getInstance()
-                      .createLiveRoom(roomId.toString());
-                  setState(() {});
+      appBar: AppBar(
+        title: Text("观众端"),
+        actions: <Widget>[
+          IconButton(
+            icon: Icon(Icons.refresh),
+            onPressed: () async {
+              String userId = widget.userId;
+              int roomId = int.parse(widget.roomId);
+              // 获取 UserSig
+              _userSig =
+                  await TrtcBase.getUserSig(_sdkAppId, _secretKey, userId);
+              showTips('获取UserSig成功');
+              // 初始化 SDK
+              TrtcBase.sharedInstance();
+              // 设置监听
+              TrtcBase.registerCallback(
+                onError: _onError,
+                onWarning: _onWarning,
+                onEnterRoom: _onEnterRoom,
+                onExitRoom: _onExitRoom,
+                onRemoteUserEnterRoom: _onRemoteUserEnterRoom,
+                onRemoteUserLeaveRoom: _onRemoteUserLeaveRoom,
+                onUserVideoAvailable: _onUserVideoAvailable,
+                onUserAudioAvailable: _onUserAudioAvailable,
+                onConnectionLost: _onConnectionLost,
+                onTryToReconnect: _onTryToReconnect,
+                onConnectionRecovery: _onConnectionRecovery,
+                onTrtcViewClick: (viewId) {
+                  showTips('$viewId被点击');
                 },
-                child: Text("开始直播"),
-              ),
-            ),
-          ],
-        ));
+              );
+              // 进入房间
+              TrtcRoom.enterRoom(_sdkAppId, userId, _userSig, roomId,
+                  TrtcAppScene.TRTC_APP_SCENE_LIVE,
+                  role: TrtcRole.TRTC_ROLE_AUDIENCE);
+            },
+          ),
+        ],
+      ),
+      body: Stack(
+        children: <Widget>[
+          Positioned(
+            top: 0,
+            bottom: 240,
+            left: 0,
+            right: 0,
+            child: _renderWidget(),
+          ),
+        ],
+      ),
+    );
   }
 
   // 渲染组件
@@ -107,11 +95,12 @@ class _LivePushPageState extends State<LivePushPage> {
       return SizedBox();
     } else {
       return Container(
-        child: _widgetMap[widget.userId],
+        child: _widgetMap[roomOwner],
       );
     }
   }
 
+  // 提示
   void showTips(String msg) {
     Fluttertoast.showToast(msg: msg);
     print(msg);

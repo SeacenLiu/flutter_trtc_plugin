@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_trtc_plugin_example/live_test/live_play_page.dart';
 import 'package:flutter_trtc_plugin_example/live_test/live_push_page.dart';
 import 'package:flutter_trtc_plugin_example/live_test/live_room_manager.dart';
 
@@ -61,12 +62,29 @@ class _LiveListPageState extends State<LiveListPage> {
   Widget _liveList() {
     if (listRoom != null) {
       return ListView.builder(
-          itemCount: listRoom.data.length,
-          itemExtent: 50.0, //强制高度为50.0
-          itemBuilder: (BuildContext context, int index) {
-            return ListTile(
-                title: Text(listRoom.data[index].roomId.toString()));
-          });
+        itemCount: listRoom.data.length,
+        itemExtent: 50.0, //强制高度为50.0
+        itemBuilder: (BuildContext context, int index) {
+          return GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (BuildContext context) {
+                  return LivePlayPage(
+                    roomId: listRoom.data[index].roomId,
+                    userId: "111111",
+                  );
+                }),
+              );
+            },
+            child: ListTile(
+              title: Text(
+                listRoom.data[index].roomId.toString(),
+              ),
+            ),
+          );
+        },
+      );
     } else {
       return SizedBox();
     }
