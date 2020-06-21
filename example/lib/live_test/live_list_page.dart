@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_trtc_plugin_example/live_test/live_push_page.dart';
 import 'package:flutter_trtc_plugin_example/live_test/live_room_manager.dart';
 
 class LiveListPage extends StatefulWidget {
@@ -41,7 +42,14 @@ class _LiveListPageState extends State<LiveListPage> {
             left: 0,
             right: 0,
             child: FlatButton(
-              onPressed: () {},
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (BuildContext context) {
+                    return LivePushPage(roomId: "12345678", userId: "12345678");
+                  }),
+                );
+              },
               child: Text("开始直播"),
             ),
           ),
@@ -56,7 +64,8 @@ class _LiveListPageState extends State<LiveListPage> {
           itemCount: listRoom.data.length,
           itemExtent: 50.0, //强制高度为50.0
           itemBuilder: (BuildContext context, int index) {
-            return ListTile(title: Text(listRoom.data[index].roomId.toString()));
+            return ListTile(
+                title: Text(listRoom.data[index].roomId.toString()));
           });
     } else {
       return SizedBox();

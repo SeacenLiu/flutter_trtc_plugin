@@ -5,7 +5,7 @@ import 'dart:convert';
 const String TRTC_LIVE_ROOM_HOST =
     "https://service-c2zjvuxa-1252463788.gz.apigw.tencentcs.com/release/forTest";
 const String sdkAppID = "1400384163";
-const String TRTC_LIVE_ROOM_TYPE = "LiveRoom";
+const String TRTC_LIVE_ROOM_TYPE = "1";//"LiveRoom";
 
 class ResponseObject {
   int errorCode = -1;
