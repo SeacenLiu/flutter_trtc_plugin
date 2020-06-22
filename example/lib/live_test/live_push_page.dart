@@ -4,6 +4,32 @@ import 'package:flutter_trtc_plugin_example/live_test/live_room_manager.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'dart:collection';
 
+class LiveVideoConfig {
+  int bitrate = 850;
+  String resolutionName = "高";
+  String resolutionDesc = "高清：540*960";
+  int resolution = TrtcVideoResolution.TRTC_VIDEO_RESOLUTION_960_540;
+
+  LiveVideoConfig(
+      this.bitrate, this.resolutionName, this.resolutionDesc, this.resolution);
+
+  static List<LiveVideoConfig> videoConfigs() {
+    return [
+      LiveVideoConfig(900, "标", "标清：360*640",
+          TrtcVideoResolution.TRTC_VIDEO_RESOLUTION_640_360),
+      LiveVideoConfig(1200, "高", "高清：540*960",
+          TrtcVideoResolution.TRTC_VIDEO_RESOLUTION_960_540),
+      LiveVideoConfig(1500, "超", "超清：720*1280",
+          TrtcVideoResolution.TRTC_VIDEO_RESOLUTION_1280_720),
+    ];
+  }
+
+  void setVideoEncoderParam() {
+    TrtcVideo.setVideoEncoderParam(
+        videoResolution: resolution, videoBitrate: bitrate);
+  }
+}
+
 class LivePushPage extends StatefulWidget {
   String roomId;
   String userId;
@@ -29,6 +55,8 @@ class _LivePushPageState extends State<LivePushPage> {
   bool isFront = true;
   bool isAudioEnable = true;
   bool isVideoEnable = true;
+  LiveVideoConfig videoConfig = LiveVideoConfig(1200, "高", "高清：540*960",
+      TrtcVideoResolution.TRTC_VIDEO_RESOLUTION_960_540);
 
   @override
   void initState() {
@@ -141,6 +169,8 @@ class _LivePushPageState extends State<LivePushPage> {
                 role: TrtcRole.TRTC_ROLE_ANCHOR);
             // 创建直播间
             LiveRoomManager.getInstance().createLiveRoom(roomId.toString());
+            // 配置视频
+            videoConfig.setVideoEncoderParam();
             // setState(() {});
           },
         ),
@@ -178,6 +208,57 @@ class _LivePushPageState extends State<LivePushPage> {
                 },
               );
             },
+          ),
+          // 视频质量
+          SizedBox(
+            width: 48,
+            height: 48,
+            child: FlatButton(
+              padding: EdgeInsets.all(8),
+              onPressed: () {
+                List<LiveVideoConfig> videoConfigs = LiveVideoConfig.videoConfigs();
+                showModalBottomSheet(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return SafeArea(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min, // 设置最小的弹出
+                        children: <Widget>[
+                          ListTile(
+                            title: Text(videoConfigs[0].resolutionDesc),
+                            onTap: () {
+                              videoConfigs[0].setVideoEncoderParam();
+                              videoConfig = videoConfigs[0];
+                              setState(() {});
+                              Navigator.pop(context);
+                            },
+                          ),
+                          ListTile(
+                            title: Text(videoConfigs[1].resolutionDesc),
+                            onTap: () {
+                              videoConfigs[1].setVideoEncoderParam();
+                              videoConfig = videoConfigs[1];
+                              setState(() {});
+                              Navigator.pop(context);
+                            },
+                          ),
+                          ListTile(
+                            title: Text(videoConfigs[2].resolutionDesc),
+                            onTap: () {
+                              videoConfigs[2].setVideoEncoderParam();
+                              videoConfig = videoConfigs[2];
+                              setState(() {});
+                              Navigator.pop(context);
+                            },
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                );
+              },
+              child: Text(videoConfig.resolutionName),
+            ),
           ),
           // 音频
           Builder(
