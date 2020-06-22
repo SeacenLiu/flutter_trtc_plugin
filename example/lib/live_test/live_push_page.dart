@@ -15,6 +15,7 @@ class LivePushPage extends StatefulWidget {
 }
 
 class _LivePushPageState extends State<LivePushPage> {
+  // 直播基础属性
   String _userSig = "";
   int _sdkAppId = 1400384163;
   String _secretKey =
@@ -24,6 +25,9 @@ class _LivePushPageState extends State<LivePushPage> {
   // UserId: UIKitView
   HashMap<String, Widget> _widgetMap = HashMap<String, Widget>();
 
+  // 直播自定义属性
+  bool isFront = true;
+
   @override
   void initState() {
     super.initState();
@@ -32,73 +36,139 @@ class _LivePushPageState extends State<LivePushPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          title: Text("主播端"),
+      backgroundColor: Colors.transparent,
+      body: Stack(
+        children: <Widget>[
+          // Render
+          Positioned(
+            top: 0,
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: _renderWidget(),
+          ),
+          // ToolBar
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: _operationBar(),
+          ),
+          // NavigationBar
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: _appBar(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 关闭直播操作
+  void _leaveLive() {
+    // 退出 TRTC 房间
+    TrtcRoom.exitRoom();
+    // 销毁直播间
+    LiveRoomManager.getInstance().destroyLiveRoom(widget.roomId);
+  }
+
+  // AppBar
+  Widget _appBar() {
+    return AppBar(
+      backgroundColor: Colors.transparent, // AppBar 透明
+      elevation: 0, // 阴影处理
+      title: Text("主播端"),
+      actions: <Widget>[
+        IconButton(
+          icon: Icon(Icons.camera_alt),
+          onPressed: () async {
+            String userId = widget.userId;
+            // 获取 UserSig
+            _userSig = await TrtcBase.getUserSig(_sdkAppId, _secretKey, userId);
+            showTips('获取UserSig成功');
+            // 初始化 SDK
+            TrtcBase.sharedInstance();
+            // 设置监听
+            TrtcBase.registerCallback(
+              onError: _onError,
+              onWarning: _onWarning,
+              onEnterRoom: _onEnterRoom,
+              onExitRoom: _onExitRoom,
+              onRemoteUserEnterRoom: _onRemoteUserEnterRoom,
+              onRemoteUserLeaveRoom: _onRemoteUserLeaveRoom,
+              onUserVideoAvailable: _onUserVideoAvailable,
+              onUserAudioAvailable: _onUserAudioAvailable,
+              onConnectionLost: _onConnectionLost,
+              onTryToReconnect: _onTryToReconnect,
+              onConnectionRecovery: _onConnectionRecovery,
+              onTrtcViewClick: (viewId) {
+                showTips('$viewId被点击');
+              },
+            );
+            // 打开麦克风和摄像头
+            TrtcAudio.startLocalAudio();
+            Widget localView = TrtcVideo.createPlatformView(userId, (viewId) {
+              _viewIdMap[userId] = viewId;
+              TrtcVideo.setLocalViewFillMode(
+                  TrtcVideoRenderMode.TRTC_VIDEO_RENDER_MODE_FILL);
+              TrtcVideo.startLocalPreview(true, _viewIdMap[userId]);
+            });
+            _widgetMap[userId] = localView;
+            setState(() {});
+          },
         ),
-        body: Stack(
-          children: <Widget>[
-            Positioned(
-              top: 0,
-              bottom: 240,
-              left: 0,
-              right: 0,
-              child: _renderWidget(),
-            ),
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: FlatButton(
-                onPressed: () async {
-                  String userId = widget.userId;
-                  int roomId = int.parse(widget.roomId);
-                  // 获取 UserSig
-                  _userSig =
-                      await TrtcBase.getUserSig(_sdkAppId, _secretKey, userId);
-                  showTips('获取UserSig成功');
-                  // 初始化 SDK
-                  TrtcBase.sharedInstance();
-                  // 设置监听
-                  TrtcBase.registerCallback(
-                    onError: _onError,
-                    onWarning: _onWarning,
-                    onEnterRoom: _onEnterRoom,
-                    onExitRoom: _onExitRoom,
-                    onRemoteUserEnterRoom: _onRemoteUserEnterRoom,
-                    onRemoteUserLeaveRoom: _onRemoteUserLeaveRoom,
-                    onUserVideoAvailable: _onUserVideoAvailable,
-                    onUserAudioAvailable: _onUserAudioAvailable,
-                    onConnectionLost: _onConnectionLost,
-                    onTryToReconnect: _onTryToReconnect,
-                    onConnectionRecovery: _onConnectionRecovery,
-                    onTrtcViewClick: (viewId) {
-                      showTips('$viewId被点击');
-                    },
-                  );
-                  // 打开麦克风和摄像头
-                  TrtcAudio.startLocalAudio();
-                  Widget localView =
-                      TrtcVideo.createPlatformView(userId, (viewId) {
-                    _viewIdMap[userId] = viewId;
-                    TrtcVideo.setLocalViewFillMode(
-                        TrtcVideoRenderMode.TRTC_VIDEO_RENDER_MODE_FILL);
-                    TrtcVideo.startLocalPreview(true, _viewIdMap[userId]);
-                  });
-                  _widgetMap[userId] = localView;
-                  // 进入房间
-                  TrtcRoom.enterRoom(_sdkAppId, userId, _userSig, roomId,
-                      TrtcAppScene.TRTC_APP_SCENE_LIVE,
-                      role: TrtcRole.TRTC_ROLE_ANCHOR);
-                  // 创建直播间
-                  LiveRoomManager.getInstance()
-                      .createLiveRoom(roomId.toString());
+        IconButton(
+          icon: Icon(Icons.live_tv),
+          onPressed: () {
+            String userId = widget.userId;
+            int roomId = int.parse(widget.roomId);
+            // 进入房间
+            TrtcRoom.enterRoom(_sdkAppId, userId, _userSig, roomId,
+                TrtcAppScene.TRTC_APP_SCENE_LIVE,
+                role: TrtcRole.TRTC_ROLE_ANCHOR);
+            // 创建直播间
+            LiveRoomManager.getInstance().createLiveRoom(roomId.toString());
+            // setState(() {});
+          },
+        ),
+        IconButton(
+          icon: Icon(Icons.stop),
+          onPressed: () {
+            _leaveLive();
+          },
+        ),
+      ],
+    );
+  }
+
+  // 底部操作栏
+  Widget _operationBar() {
+    return SafeArea( // 适配底部安全区问题
+      child: Row(
+        children: <Widget>[
+          Builder(
+            builder: (BuildContext context) {
+              Icon icon;
+              if (isFront) {
+                icon = Icon(Icons.camera_front);
+              } else {
+                icon = Icon(Icons.camera_rear);
+              }
+              return IconButton(
+                icon: icon,
+                onPressed: () {
+                  isFront = !isFront;
+                  TrtcVideo.switchCamera();
                   setState(() {});
                 },
-                child: Text("开始直播"),
-              ),
-            ),
-          ],
-        ));
+              );
+            },
+          ),
+        ],
+      ),
+    );
   }
 
   // 渲染组件
@@ -106,6 +176,7 @@ class _LivePushPageState extends State<LivePushPage> {
     if (_widgetMap == null || _widgetMap.isEmpty) {
       return SizedBox();
     } else {
+      print("预览画面");
       return Container(
         child: _widgetMap[widget.userId],
       );

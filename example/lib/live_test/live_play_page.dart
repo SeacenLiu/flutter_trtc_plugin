@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:collection';
 import 'package:flutter_trtc_plugin/flutter_trtc_plugin.dart';
-import 'package:flutter_trtc_plugin_example/live_test/live_room_manager.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
 class LivePlayPage extends StatefulWidget {
