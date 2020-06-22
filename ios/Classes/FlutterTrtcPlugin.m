@@ -205,7 +205,7 @@ static NSString * const stopPublish = @"stopPublish";/** 停止推流 */
         [self.trtc stopAllRemoteView];
     }else if ([muteLocalVideo isEqualToString:call.method]) {
         BOOL mote =[self numberToBoolValue:args[@"mote"]];
-        [self.trtc muteLocalAudio:mote];
+        [self.trtc muteLocalVideo:mote];
     }else if ([setLocalViewFillMode isEqualToString:call.method]) {
         int mode = [self numberToIntValue:args[@"mode"]];
         [self.trtc setLocalViewFillMode:mode];

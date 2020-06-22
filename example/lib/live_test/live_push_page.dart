@@ -27,6 +27,8 @@ class _LivePushPageState extends State<LivePushPage> {
 
   // 直播自定义属性
   bool isFront = true;
+  bool isAudioEnable = true;
+  bool isVideoEnable = true;
 
   @override
   void initState() {
@@ -72,6 +74,14 @@ class _LivePushPageState extends State<LivePushPage> {
     TrtcRoom.exitRoom();
     // 销毁直播间
     LiveRoomManager.getInstance().destroyLiveRoom(widget.roomId);
+    // 销毁 PlatformView
+    _widgetMap = Map();
+    _viewIdMap.forEach(
+      (key, value) {
+        TrtcVideo.destroyPlatformView(value);
+      },
+    );
+    _viewIdMap = Map();
   }
 
   // AppBar
@@ -79,6 +89,7 @@ class _LivePushPageState extends State<LivePushPage> {
     return AppBar(
       backgroundColor: Colors.transparent, // AppBar 透明
       elevation: 0, // 阴影处理
+      centerTitle: true,
       title: Text("主播端"),
       actions: <Widget>[
         IconButton(
@@ -145,9 +156,11 @@ class _LivePushPageState extends State<LivePushPage> {
 
   // 底部操作栏
   Widget _operationBar() {
-    return SafeArea( // 适配底部安全区问题
+    return SafeArea(
+      // 适配底部安全区问题
       child: Row(
         children: <Widget>[
+          // 翻转摄像头
           Builder(
             builder: (BuildContext context) {
               Icon icon;
@@ -166,6 +179,44 @@ class _LivePushPageState extends State<LivePushPage> {
               );
             },
           ),
+          // 音频
+          Builder(
+            builder: (BuildContext context) {
+              Icon icon;
+              if (isAudioEnable) {
+                icon = Icon(Icons.mic);
+              } else {
+                icon = Icon(Icons.mic_off);
+              }
+              return IconButton(
+                icon: icon,
+                onPressed: () {
+                  isAudioEnable = !isAudioEnable;
+                  TrtcAudio.muteLocalAudio(!isAudioEnable);
+                  setState(() {});
+                },
+              );
+            },
+          ),
+          // 视频
+          Builder(
+            builder: (BuildContext context) {
+              Icon icon;
+              if (isVideoEnable) {
+                icon = Icon(Icons.videocam);
+              } else {
+                icon = Icon(Icons.videocam_off);
+              }
+              return IconButton(
+                icon: icon,
+                onPressed: () {
+                  isVideoEnable = !isVideoEnable;
+                  TrtcVideo.muteLocalVideo(!isVideoEnable);
+                  setState(() {});
+                },
+              );
+            },
+          ),
         ],
       ),
     );
@@ -176,7 +227,6 @@ class _LivePushPageState extends State<LivePushPage> {
     if (_widgetMap == null || _widgetMap.isEmpty) {
       return SizedBox();
     } else {
-      print("预览画面");
       return Container(
         child: _widgetMap[widget.userId],
       );
