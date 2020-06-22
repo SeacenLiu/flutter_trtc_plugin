@@ -189,6 +189,7 @@ class _LivePushPageState extends State<LivePushPage> {
     return SafeArea(
       // 适配底部安全区问题
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
           // 翻转摄像头
           Builder(
@@ -216,7 +217,8 @@ class _LivePushPageState extends State<LivePushPage> {
             child: FlatButton(
               padding: EdgeInsets.all(8),
               onPressed: () {
-                List<LiveVideoConfig> videoConfigs = LiveVideoConfig.videoConfigs();
+                List<LiveVideoConfig> videoConfigs =
+                    LiveVideoConfig.videoConfigs();
                 showModalBottomSheet(
                   context: context,
                   builder: (BuildContext context) {
@@ -296,6 +298,12 @@ class _LivePushPageState extends State<LivePushPage> {
                   setState(() {});
                 },
               );
+            },
+          ),
+          IconButton(
+            icon: Icon(Icons.info),
+            onPressed: () {
+              
             },
           ),
         ],
