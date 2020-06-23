@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_trtc_plugin/flutter_trtc_plugin.dart';
 import 'package:dio/dio.dart';
 import 'dart:convert';
@@ -5,13 +6,15 @@ import 'dart:convert';
 const String TRTC_LIVE_ROOM_HOST =
     "https://service-c2zjvuxa-1252463788.gz.apigw.tencentcs.com/release/forTest";
 const String sdkAppID = "1400384163";
-const String TRTC_LIVE_ROOM_TYPE = "1";//"LiveRoom";
+const String TRTC_LIVE_ROOM_TYPE = "1"; //"LiveRoom";
 
 class ResponseObject {
   int errorCode = -1;
   String errorMessage = "";
 
-  ResponseObject.fromJson(Map<String, dynamic> json) : errorCode = json['errorCode'], errorMessage = json['errorMessage'];
+  ResponseObject.fromJson(Map<String, dynamic> json)
+      : errorCode = json['errorCode'],
+        errorMessage = json['errorMessage'];
 }
 
 class LiveRoomItem {
@@ -46,8 +49,6 @@ class RoomListRespObject {
 
 class LiveRemoteUser {
   String userId = "";
-  
-  int viewId = 0;
   bool isVideoMuted = false;
   bool isAudioMuted = false;
 
@@ -106,12 +107,24 @@ class LiveRoomManager {
     }
   }
 
+  void ownerEnterRoom(String userId) {
+    onRemoteUserEnterRoom(userId);
+  }
+
+  void ownerLeaveRoom(String userId) {
+    onRemoteUserLeaveRoom(userId);
+  }
+
   void onRemoteUserEnterRoom(String userId) {
     roomUserMap[userId] = LiveRemoteUser(userId);
   }
 
   void onRemoteUserLeaveRoom(String userId) {
     roomUserMap.remove(userId);
+  }
+
+  void exitRoom() {
+    roomUserMap.clear();
   }
 
   // ---------------------- 房间列表协议 ---------------------
@@ -145,7 +158,7 @@ class LiveRoomManager {
     if (response.data is Map) {
       Map<String, dynamic> data = response.data;
       ResponseObject obj = ResponseObject.fromJson(data);
-      roomUserMap = Map();
+      roomUserMap.clear();
       return Future.value(obj);
     }
     return Future.value(null);
@@ -164,7 +177,7 @@ class LiveRoomManager {
     if (response.data is Map) {
       Map<String, dynamic> data = response.data;
       ResponseObject obj = ResponseObject.fromJson(data);
-      roomUserMap = Map();
+      roomUserMap.clear();
       return Future.value(obj);
     }
     return Future.value(null);

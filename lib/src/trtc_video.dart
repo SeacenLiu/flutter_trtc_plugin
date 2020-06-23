@@ -7,9 +7,10 @@ import 'package:flutter_trtc_plugin/flutter_trtc_plugin.dart';
 
 class TrtcVideoView extends StatefulWidget {
   final String userId;
+  int viewId = 0;
   final void Function(int viewId) onViewCreated;
 
-  const TrtcVideoView({Key key, this.userId, this.onViewCreated}) : super(key: key);
+  TrtcVideoView({Key key, this.userId, this.onViewCreated}) : super(key: key);
 
   @override
   _TrtcVideoViewState createState() => _TrtcVideoViewState();
@@ -23,6 +24,7 @@ class _TrtcVideoViewState extends State<TrtcVideoView> {
           key: ObjectKey(widget.userId),
           viewType: 'flutter_trtc_plugin/view',
           onPlatformViewCreated: (int viewId) {
+            widget.viewId = viewId;
             if (widget.onViewCreated != null) {
               widget.onViewCreated(viewId);
             }
@@ -31,9 +33,10 @@ class _TrtcVideoViewState extends State<TrtcVideoView> {
       return AndroidView(
         key: ObjectKey(widget.userId),
         viewType: 'flutter_trtc_plugin/view',
-        onPlatformViewCreated: (int viewID) {
+        onPlatformViewCreated: (int viewId) {
+          widget.viewId = viewId;
           if (widget.onViewCreated != null) {
-            widget.onViewCreated(viewID);
+            widget.onViewCreated(viewId);
           }
         },
       );

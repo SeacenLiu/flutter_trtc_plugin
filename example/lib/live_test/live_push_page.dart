@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_trtc_plugin/flutter_trtc_plugin.dart';
 import 'package:flutter_trtc_plugin_example/live_test/live_room_manager.dart';
+import 'package:flutter_trtc_plugin_example/scene_live_test/live_room/room_manager.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'dart:collection';
 
@@ -46,10 +47,10 @@ class _LivePushPageState extends State<LivePushPage> {
   int _sdkAppId = 1400384163;
   String _secretKey =
       'b005f225bd2051f6a7fd3d7f89deb62275342a81a767d04454db91a6943e1215';
-  // UserId: ViewId
-  HashMap<String, int> _viewIdMap = HashMap<String, int>();
-  // UserId: UIKitView
-  HashMap<String, Widget> _widgetMap = HashMap<String, Widget>();
+  LiveRoomManager roomManager = LiveRoomManager.getInstance();
+
+  // 渲染视图管理属性
+  TrtcVideoView localVideoView;
 
   // 直播自定义属性
   bool isFront = true;
@@ -103,13 +104,8 @@ class _LivePushPageState extends State<LivePushPage> {
     // 销毁直播间
     LiveRoomManager.getInstance().destroyLiveRoom(widget.roomId);
     // 销毁 PlatformView
-    _widgetMap = Map();
-    _viewIdMap.forEach(
-      (key, value) {
-        TrtcVideo.destroyPlatformView(value);
-      },
-    );
-    _viewIdMap = Map();
+    TrtcVideo.destroyPlatformView(localVideoView.viewId);
+    localVideoView = null;
   }
 
   // AppBar
@@ -147,14 +143,13 @@ class _LivePushPageState extends State<LivePushPage> {
               },
             );
             // 打开麦克风和摄像头
+            roomManager.ownerEnterRoom(widget.userId);
             TrtcAudio.startLocalAudio();
-            Widget localView = TrtcVideo.createPlatformView(userId, (viewId) {
-              _viewIdMap[userId] = viewId;
+            localVideoView = TrtcVideo.createPlatformView(userId, (viewId) {
               TrtcVideo.setLocalViewFillMode(
                   TrtcVideoRenderMode.TRTC_VIDEO_RENDER_MODE_FILL);
-              TrtcVideo.startLocalPreview(true, _viewIdMap[userId]);
+              TrtcVideo.startLocalPreview(true, viewId);
             });
-            _widgetMap[userId] = localView;
             setState(() {});
           },
         ),
@@ -303,7 +298,7 @@ class _LivePushPageState extends State<LivePushPage> {
           IconButton(
             icon: Icon(Icons.info),
             onPressed: () {
-              
+
             },
           ),
         ],
@@ -313,11 +308,11 @@ class _LivePushPageState extends State<LivePushPage> {
 
   // 渲染组件
   Widget _renderWidget() {
-    if (_widgetMap == null || _widgetMap.isEmpty) {
+    if (localVideoView == null) {
       return SizedBox();
     } else {
       return Container(
-        child: _widgetMap[widget.userId],
+        child: localVideoView,
       );
     }
   }
@@ -358,8 +353,7 @@ class _LivePushPageState extends State<LivePushPage> {
     String msg;
     if (reason == 0) {
       msg = '用户主动离开房间';
-      _widgetMap.clear();
-      _viewIdMap.clear();
+      roomManager.exitRoom();
     } else if (reason == 1) {
       msg = '用户被踢出房间';
     } else {
@@ -371,6 +365,7 @@ class _LivePushPageState extends State<LivePushPage> {
   void _onRemoteUserEnterRoom(String userId) {
     String msg = '用户$userId进入房间';
     showTips(msg);
+    roomManager.onRemoteUserEnterRoom(userId);
   }
 
   void _onRemoteUserLeaveRoom(String userId, int reason) {
@@ -383,35 +378,36 @@ class _LivePushPageState extends State<LivePushPage> {
       reasonStr = '用户被踢出房间';
     }
     showTips('用户$userId离开房间，离开原因为：$reasonStr');
+    roomManager.onRemoteUserLeaveRoom(userId);
   }
 
   void _onUserVideoAvailable(String userId, bool available) {
     String availableStr = available ? '开启' : '关闭';
     showTips('用户$userId的画面$availableStr');
 
-    if (available) {
-      if (!_viewIdMap.containsKey(userId) && !_widgetMap.containsKey(userId)) {
-        Widget widget = TrtcVideo.createPlatformView(userId, (viewId) {
-          _viewIdMap[userId] = viewId;
-          TrtcVideo.setRemoteViewFillMode(
-              userId, TrtcVideoRenderMode.TRTC_VIDEO_RENDER_MODE_FILL);
-          TrtcVideo.startRemoteView(userId, viewId);
-        });
-        _widgetMap[userId] = widget;
-        setState(() {});
-      }
-    } else {
-      if (_viewIdMap.containsKey(userId) && _widgetMap.containsKey(userId)) {
-        TrtcVideo.stopRemoteView(userId);
-        TrtcVideo.destroyPlatformView(_viewIdMap[userId]).then((flag) {
-          if (flag) {
-            _viewIdMap.remove(userId);
-            _widgetMap.remove(userId);
-            setState(() {});
-          }
-        });
-      }
-    }
+    // if (available) {
+    //   if (!roomManager.containsViewId(userId) && !_widgetMap.containsKey(userId)) {
+    //     Widget widget = TrtcVideo.createPlatformView(userId, (viewId) {
+    //       roomManager.setViewId(userId, viewId);
+    //       TrtcVideo.setRemoteViewFillMode(
+    //           userId, TrtcVideoRenderMode.TRTC_VIDEO_RENDER_MODE_FILL);
+    //       TrtcVideo.startRemoteView(userId, viewId);
+    //     });
+    //     _widgetMap[userId] = widget;
+    //     setState(() {});
+    //   }
+    // } else {
+    //   if (roomManager.containsViewId(userId) && _widgetMap.containsKey(userId)) {
+    //     TrtcVideo.stopRemoteView(userId);
+    //     TrtcVideo.destroyPlatformView(roomManager.getViewId(userId)).then((flag) {
+    //       if (flag) {
+    //         roomManager.removeViewId(userId);
+    //         _widgetMap.remove(userId);
+    //         setState(() {});
+    //       }
+    //     });
+    //   }
+    // }
   }
 
   void _onUserAudioAvailable(String userId, bool available) {
