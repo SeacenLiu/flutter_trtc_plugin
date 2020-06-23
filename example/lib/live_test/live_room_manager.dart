@@ -46,6 +46,8 @@ class RoomListRespObject {
 
 class LiveRemoteUser {
   String userId = "";
+  
+  int viewId = 0;
   bool isVideoMuted = false;
   bool isAudioMuted = false;
 
@@ -66,14 +68,13 @@ class LiveRoomManager {
   static LiveRoomManager getInstance() {
     if (_instance == null) {
       _instance = LiveRoomManager._();
-      _instance.roomUserMap = Map();
     }
     return _instance;
   }
 
   // ---------------------- 直播间用户状态 ---------------------
   /// 用于保存房间内用户的静音和静画状态，以userId为key，存储的是一个LiveRemoteUser对象
-  Map<String, LiveRemoteUser> roomUserMap = {};
+  Map<String, LiveRemoteUser> roomUserMap = Map();
 
   bool isVideoMuted(String userId) {
     LiveRemoteUser user = roomUserMap[userId];

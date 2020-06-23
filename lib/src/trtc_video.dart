@@ -102,8 +102,13 @@ class TrtcVideo {
   ///
   /// [mote] true：屏蔽；false：开启，默认值：false
   /// @discussion 当停止推送本地视频后，房间里的其它成员将会收到 [TrtcBase.registerCallback] 中的 onUserVideoAvailable 回调通知
-  static Future<void> muteLocalVideo(bool mote) async {
-    return await _channel.invokeMethod('muteLocalVideo', {'mote': mote});
+  static Future<void> muteLocalVideo(bool mute) async {
+    return await _channel.invokeMethod('muteLocalVideo', {'mute': mute});
+  }
+
+  /// 是否
+  static Future<void> muteRemoteVideoStream(String userId, bool mute) async {
+    return await _channel.invokeMethod('muteRemoteVideoStream', {'userId': userId, 'mute': mute});
   }
 
   /// 设置本地图像的渲染模式

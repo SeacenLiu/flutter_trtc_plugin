@@ -52,6 +52,7 @@ static NSString * const setRemoteSubStreamViewRotation = @"setRemoteSubStreamVie
 // seacenliu: 互动直播新添加
 static NSString * const startPublishing = @"startPublishing";/** 开始推流 */
 static NSString * const stopPublish = @"stopPublish";/** 停止推流 */
+static NSString * const muteRemoteVideoStream = @"muteRemoteVideoStream"; /** 停止拉取远程视频 */
 
 
 @interface FlutterTrtcPlugin()<TRTCCloudDelegate,FlutterStreamHandler>
@@ -204,8 +205,12 @@ static NSString * const stopPublish = @"stopPublish";/** 停止推流 */
     }else if ([stopAllRemoteView isEqualToString:call.method]) {
         [self.trtc stopAllRemoteView];
     }else if ([muteLocalVideo isEqualToString:call.method]) {
-        BOOL mote =[self numberToBoolValue:args[@"mote"]];
+        BOOL mote =[self numberToBoolValue:args[@"mute"]];
         [self.trtc muteLocalVideo:mote];
+    }else if ([muteRemoteVideoStream isEqualToString:call.method]) {
+        NSString *userId = args[@"userId"];
+        BOOL mote = [self numberToBoolValue:args[@"mote"]];
+        [self.trtc muteRemoteVideoStream:userId mute:mote];
     }else if ([setLocalViewFillMode isEqualToString:call.method]) {
         int mode = [self numberToIntValue:args[@"mode"]];
         [self.trtc setLocalViewFillMode:mode];

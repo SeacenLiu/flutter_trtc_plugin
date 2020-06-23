@@ -18,12 +18,15 @@ class _LivePlayPageState extends State<LivePlayPage> {
   int _sdkAppId = 1400384163;
   String _secretKey =
       'b005f225bd2051f6a7fd3d7f89deb62275342a81a767d04454db91a6943e1215';
+
+  String roomOwner;
+  // 直播自定义属性
+  bool isAudioEnable = true;
+  bool isVideoEnable = true;
   // UserId: ViewId
   HashMap<String, int> _viewIdMap = HashMap<String, int>();
   // UserId: UIKitView
   HashMap<String, Widget> _widgetMap = HashMap<String, Widget>();
-
-  String roomOwner;
 
   @override
   void initState() {
@@ -35,7 +38,52 @@ class _LivePlayPageState extends State<LivePlayPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      body: Stack(
+        children: <Widget>[
+          // Render
+          Positioned(
+            top: 0,
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: _renderWidget(),
+          ),
+          // ToolBar
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: _operationBar(),
+          ),
+          // NavigationBar
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: _appBar(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 关闭直播操作
+  void _leaveLive() {
+    // 退出 TRTC 房间
+    TrtcRoom.exitRoom();
+    // 销毁 PlatformView
+    _widgetMap = Map();
+    _viewIdMap.forEach(
+      (key, value) {
+        TrtcVideo.destroyPlatformView(value);
+      },
+    );
+    _viewIdMap = Map();
+  }
+
+  // appBar
+  Widget _appBar() {
+    return AppBar(
         title: Text("观众端"),
         actions: <Widget>[
           IconButton(
@@ -72,16 +120,76 @@ class _LivePlayPageState extends State<LivePlayPage> {
                   role: TrtcRole.TRTC_ROLE_AUDIENCE);
             },
           ),
+          IconButton(
+            icon: Icon(Icons.stop),
+            onPressed: () {
+              _leaveLive();
+            },
+          ),
         ],
-      ),
-      body: Stack(
+      );
+  }
+
+  // 底部操作按钮
+  Widget _operationBar() {
+    return SafeArea(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
-          Positioned(
-            top: 0,
-            bottom: 240,
-            left: 0,
-            right: 0,
-            child: _renderWidget(),
+          // 通话
+          IconButton(
+            icon: Icon(Icons.call),
+            onPressed: () {
+              print('发起连麦');
+            },
+          ),
+          // 音频
+          Builder(
+            builder: (BuildContext context) {
+              Icon icon;
+              if (isAudioEnable) {
+                icon = Icon(Icons.mic);
+              } else {
+                icon = Icon(Icons.mic_off);
+              }
+              return IconButton(
+                icon: icon,
+                onPressed: () {
+                  isAudioEnable = !isAudioEnable;
+                  TrtcAudio.muteRemoteAudio(roomOwner, !isAudioEnable);
+                  setState(() {});
+                },
+              );
+            },
+          ),
+          // 视频
+          Builder(
+            builder: (BuildContext context) {
+              Icon icon;
+              if (isVideoEnable) {
+                icon = Icon(Icons.videocam);
+              } else {
+                icon = Icon(Icons.videocam_off);
+              }
+              return IconButton(
+                icon: icon,
+                onPressed: () {
+                  isVideoEnable = !isVideoEnable;
+                  if (isVideoEnable) {
+                    TrtcVideo.startRemoteView(roomOwner, _viewIdMap[roomOwner]);
+                  } else {
+                    TrtcVideo.stopRemoteView(roomOwner);
+                  }
+                  setState(() {});
+                },
+              );
+            },
+          ),
+          IconButton(
+            icon: Icon(Icons.info),
+            onPressed: () {
+
+            },
           ),
         ],
       ),
