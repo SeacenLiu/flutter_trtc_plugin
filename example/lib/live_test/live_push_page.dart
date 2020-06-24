@@ -108,6 +108,8 @@ class _LivePushPageState extends State<LivePushPage> {
 
   // 关闭直播操作
   void _leaveLive() {
+    // 解除监听
+    TrtcBase.unregisterCallback();
     // 退出 TRTC 房间
     TrtcRoom.exitRoom();
     // 销毁直播间
@@ -117,6 +119,10 @@ class _LivePushPageState extends State<LivePushPage> {
       TrtcVideo.destroyPlatformView(localVideoView.viewId);
       localVideoView = null;
     }
+    remoteVideoViews.forEach((key, value) {
+      TrtcVideo.destroyPlatformView(value.viewId);
+    });
+    remoteVideoViews.clear();
   }
 
   // AppBar

@@ -1,7 +1,13 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'dart:collection';
 import 'package:flutter_trtc_plugin/flutter_trtc_plugin.dart';
+import 'package:flutter_trtc_plugin_example/live_test/live_room_manager.dart';
+import 'package:flutter_trtc_plugin_example/scene_live_test/live_room/room_manager.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+
+import 'live_sub_video_view.dart';
 
 class LivePlayPage extends StatefulWidget {
   String roomId;
@@ -18,15 +24,15 @@ class _LivePlayPageState extends State<LivePlayPage> {
   int _sdkAppId = 1400384163;
   String _secretKey =
       'b005f225bd2051f6a7fd3d7f89deb62275342a81a767d04454db91a6943e1215';
+  LiveRoomManager roomManager = LiveRoomManager.getInstance();
 
   String roomOwner;
   // 直播自定义属性
   bool isAudioEnable = true;
   bool isVideoEnable = true;
-  // UserId: ViewId
-  HashMap<String, int> _viewIdMap = HashMap<String, int>();
-  // UserId: UIKitView
-  HashMap<String, Widget> _widgetMap = HashMap<String, Widget>();
+  bool isSwitch = false;
+  TrtcVideoView localVideoView;
+  Map<String, TrtcVideoView> remoteVideoViews = Map();
 
   @override
   void initState() {
@@ -46,7 +52,14 @@ class _LivePlayPageState extends State<LivePlayPage> {
             bottom: 0,
             left: 0,
             right: 0,
-            child: _renderWidget(),
+            child: _roomOwnerWidget(),
+          ),
+          Positioned(
+            top: 0,
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: _localAndOtherVideoWidget(),
           ),
           // ToolBar
           Positioned(
@@ -69,65 +82,67 @@ class _LivePlayPageState extends State<LivePlayPage> {
 
   // 关闭直播操作
   void _leaveLive() {
+    // 解除监听
+    TrtcBase.unregisterCallback();
     // 退出 TRTC 房间
     TrtcRoom.exitRoom();
     // 销毁 PlatformView
-    _widgetMap = Map();
-    _viewIdMap.forEach(
-      (key, value) {
-        TrtcVideo.destroyPlatformView(value);
-      },
-    );
-    _viewIdMap = Map();
+    if (localVideoView != null) {
+      TrtcVideo.destroyPlatformView(localVideoView.viewId);
+      localVideoView = null;
+    }
+    remoteVideoViews.forEach((key, value) {
+      TrtcVideo.destroyPlatformView(value.viewId);
+    });
+    remoteVideoViews.clear();
   }
 
   // appBar
   Widget _appBar() {
     return AppBar(
-        title: Text("观众端"),
-        actions: <Widget>[
-          IconButton(
-            icon: Icon(Icons.refresh),
-            onPressed: () async {
-              String userId = widget.userId;
-              int roomId = int.parse(widget.roomId);
-              // 获取 UserSig
-              _userSig =
-                  await TrtcBase.getUserSig(_sdkAppId, _secretKey, userId);
-              showTips('获取UserSig成功');
-              // 初始化 SDK
-              TrtcBase.sharedInstance();
-              // 设置监听
-              TrtcBase.registerCallback(
-                onError: _onError,
-                onWarning: _onWarning,
-                onEnterRoom: _onEnterRoom,
-                onExitRoom: _onExitRoom,
-                onRemoteUserEnterRoom: _onRemoteUserEnterRoom,
-                onRemoteUserLeaveRoom: _onRemoteUserLeaveRoom,
-                onUserVideoAvailable: _onUserVideoAvailable,
-                onUserAudioAvailable: _onUserAudioAvailable,
-                onConnectionLost: _onConnectionLost,
-                onTryToReconnect: _onTryToReconnect,
-                onConnectionRecovery: _onConnectionRecovery,
-                onTrtcViewClick: (viewId) {
-                  showTips('$viewId被点击');
-                },
-              );
-              // 进入房间
-              TrtcRoom.enterRoom(_sdkAppId, userId, _userSig, roomId,
-                  TrtcAppScene.TRTC_APP_SCENE_LIVE,
-                  role: TrtcRole.TRTC_ROLE_AUDIENCE);
-            },
-          ),
-          IconButton(
-            icon: Icon(Icons.stop),
-            onPressed: () {
-              _leaveLive();
-            },
-          ),
-        ],
-      );
+      title: Text("观众端"),
+      actions: <Widget>[
+        IconButton(
+          icon: Icon(Icons.refresh),
+          onPressed: () async {
+            String userId = widget.userId;
+            int roomId = int.parse(widget.roomId);
+            // 获取 UserSig
+            _userSig = await TrtcBase.getUserSig(_sdkAppId, _secretKey, userId);
+            showTips('获取UserSig成功');
+            // 初始化 SDK
+            TrtcBase.sharedInstance();
+            // 设置监听
+            TrtcBase.registerCallback(
+              onError: _onError,
+              onWarning: _onWarning,
+              onEnterRoom: _onEnterRoom,
+              onExitRoom: _onExitRoom,
+              onRemoteUserEnterRoom: _onRemoteUserEnterRoom,
+              onRemoteUserLeaveRoom: _onRemoteUserLeaveRoom,
+              onUserVideoAvailable: _onUserVideoAvailable,
+              onUserAudioAvailable: _onUserAudioAvailable,
+              onConnectionLost: _onConnectionLost,
+              onTryToReconnect: _onTryToReconnect,
+              onConnectionRecovery: _onConnectionRecovery,
+              onTrtcViewClick: (viewId) {
+                showTips('$viewId被点击');
+              },
+            );
+            // 进入房间
+            TrtcRoom.enterRoom(_sdkAppId, userId, _userSig, roomId,
+                TrtcAppScene.TRTC_APP_SCENE_LIVE,
+                role: TrtcRole.TRTC_ROLE_AUDIENCE);
+          },
+        ),
+        IconButton(
+          icon: Icon(Icons.stop),
+          onPressed: () {
+            _leaveLive();
+          },
+        ),
+      ],
+    );
   }
 
   // 底部操作按钮
@@ -141,6 +156,25 @@ class _LivePlayPageState extends State<LivePlayPage> {
             icon: Icon(Icons.call),
             onPressed: () {
               print('发起连麦');
+              isSwitch = !isSwitch;
+              if (isSwitch) {
+                TrtcRoom.switchRole(TrtcRole.TRTC_ROLE_ANCHOR);
+                TrtcAudio.startLocalAudio();
+                localVideoView = TrtcVideo.createPlatformView(
+                  widget.userId,
+                  (viewId) {
+                    TrtcVideo.startLocalPreview(true, viewId);
+                  },
+                );
+                setState(() {});
+              } else {
+                TrtcRoom.switchRole(TrtcRole.TRTC_ROLE_AUDIENCE);
+                TrtcAudio.stopLocalAudio();
+                TrtcVideo.stopLocalPreview();
+                TrtcVideo.destroyPlatformView(localVideoView.viewId);
+                localVideoView = null;
+                setState(() {});
+              }
             },
           ),
           // 音频
@@ -176,7 +210,8 @@ class _LivePlayPageState extends State<LivePlayPage> {
                 onPressed: () {
                   isVideoEnable = !isVideoEnable;
                   if (isVideoEnable) {
-                    TrtcVideo.startRemoteView(roomOwner, _viewIdMap[roomOwner]);
+                    TrtcVideo.startRemoteView(
+                        roomOwner, remoteVideoViews[roomOwner].viewId);
                   } else {
                     TrtcVideo.stopRemoteView(roomOwner);
                   }
@@ -187,9 +222,7 @@ class _LivePlayPageState extends State<LivePlayPage> {
           ),
           IconButton(
             icon: Icon(Icons.info),
-            onPressed: () {
-
-            },
+            onPressed: () {},
           ),
         ],
       ),
@@ -197,14 +230,80 @@ class _LivePlayPageState extends State<LivePlayPage> {
   }
 
   // 渲染组件
-  Widget _renderWidget() {
-    if (_widgetMap == null || _widgetMap.isEmpty) {
+  Widget _roomOwnerWidget() {
+    if (remoteVideoViews[roomOwner] == null) {
       return SizedBox();
     } else {
       return Container(
-        child: _widgetMap[roomOwner],
+        child: remoteVideoViews[roomOwner],
       );
     }
+  }
+
+  Widget _localAndOtherVideoWidget() {
+    if (localVideoView != null ||
+        (remoteVideoViews[roomOwner] != null && remoteVideoViews.length > 1) ||
+        (remoteVideoViews[roomOwner] == null && remoteVideoViews.length > 0)) {
+      List<Widget> views = List();
+      print('123');
+      if (localVideoView != null) {
+        views.add(_remoteVideoView(localVideoView));
+      }
+      remoteVideoViews.forEach(
+        (key, value) {
+          if (key != roomOwner) {
+            views.add(_remoteVideoView(value));
+          }
+        },
+      );
+      // - 16 - 90 - x - 90 - 16 -
+      double crossAxisSpacing =
+          (window.physicalSize.width / window.devicePixelRatio) - 212;
+      return GridView.count(
+        // 禁止滑动
+        physics: NeverScrollableScrollPhysics(),
+        // 逆向编排
+        reverse: true,
+        // 水平子Widget之间间距
+        crossAxisSpacing: crossAxisSpacing,
+        // 垂直子Widget之间间距
+        mainAxisSpacing: 16.0,
+        // GridView内边距
+        padding: EdgeInsets.fromLTRB(16, 0, 16, 85),
+        // 一行的Widget数量
+        crossAxisCount: 2,
+        // 子Widget宽高比例
+        childAspectRatio: 90 / 160,
+        // 子Widget列表
+        children: views,
+      );
+    } else {
+      return SizedBox();
+    }
+  }
+
+  Widget _remoteVideoView(TrtcVideoView videoView) {
+    return LiveSubVideoView(
+      child: videoView,
+      onAudioEnable: (bool enable) {
+        if (videoView.userId == widget.userId) {
+          TrtcAudio.muteLocalAudio(!enable);
+        } else {
+          TrtcAudio.muteRemoteAudio(videoView.userId, !enable);
+        }
+      },
+      onVideoEnable: (bool enable) {
+        if (videoView.userId == widget.userId) {
+          TrtcVideo.muteLocalVideo(!enable);
+        } else {
+          if (enable) {
+            TrtcVideo.startRemoteView(videoView.userId, videoView.viewId);
+          } else {
+            TrtcVideo.stopRemoteView(videoView.userId);
+          }
+        }
+      },
+    );
   }
 
   // 提示
@@ -244,8 +343,7 @@ class _LivePlayPageState extends State<LivePlayPage> {
     String msg;
     if (reason == 0) {
       msg = '用户主动离开房间';
-      _widgetMap.clear();
-      _viewIdMap.clear();
+      roomManager.exitRoom();
     } else if (reason == 1) {
       msg = '用户被踢出房间';
     } else {
@@ -274,25 +372,25 @@ class _LivePlayPageState extends State<LivePlayPage> {
   void _onUserVideoAvailable(String userId, bool available) {
     String availableStr = available ? '开启' : '关闭';
     showTips('用户$userId的画面$availableStr');
-
     if (available) {
-      if (!_viewIdMap.containsKey(userId) && !_widgetMap.containsKey(userId)) {
-        Widget widget = TrtcVideo.createPlatformView(userId, (viewId) {
-          _viewIdMap[userId] = viewId;
-          TrtcVideo.setRemoteViewFillMode(
-              userId, TrtcVideoRenderMode.TRTC_VIDEO_RENDER_MODE_FILL);
-          TrtcVideo.startRemoteView(userId, viewId);
-        });
-        _widgetMap[userId] = widget;
+      if (remoteVideoViews[userId] == null) {
+        remoteVideoViews[userId] = TrtcVideo.createPlatformView(
+          userId,
+          (viewID) {
+            TrtcVideo.setRemoteViewFillMode(
+                userId, TrtcVideoRenderMode.TRTC_VIDEO_RENDER_MODE_FILL);
+            TrtcVideo.startRemoteView(userId, viewID);
+          },
+        );
         setState(() {});
       }
     } else {
-      if (_viewIdMap.containsKey(userId) && _widgetMap.containsKey(userId)) {
+      if (remoteVideoViews[userId] != null) {
         TrtcVideo.stopRemoteView(userId);
-        TrtcVideo.destroyPlatformView(_viewIdMap[userId]).then((flag) {
+        TrtcVideo.destroyPlatformView(remoteVideoViews[userId].viewId)
+            .then((flag) {
           if (flag) {
-            _viewIdMap.remove(userId);
-            _widgetMap.remove(userId);
+            remoteVideoViews.remove(userId);
             setState(() {});
           }
         });
