@@ -1,10 +1,8 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'dart:collection';
 import 'package:flutter_trtc_plugin/flutter_trtc_plugin.dart';
 import 'package:flutter_trtc_plugin_example/live_test/live_room_manager.dart';
-import 'package:flutter_trtc_plugin_example/scene_live_test/live_room/room_manager.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
 import 'live_sub_video_view.dart';
@@ -31,6 +29,7 @@ class _LivePlayPageState extends State<LivePlayPage> {
   bool isAudioEnable = true;
   bool isVideoEnable = true;
   bool isSwitch = false;
+  bool isFront = true;
   TrtcVideoView localVideoView;
   Map<String, TrtcVideoView> remoteVideoViews = Map();
 
@@ -166,6 +165,7 @@ class _LivePlayPageState extends State<LivePlayPage> {
                     TrtcVideo.startLocalPreview(true, viewId);
                   },
                 );
+                isFront = true;
                 setState(() {});
               } else {
                 TrtcRoom.switchRole(TrtcRole.TRTC_ROLE_AUDIENCE);
@@ -176,6 +176,29 @@ class _LivePlayPageState extends State<LivePlayPage> {
                 setState(() {});
               }
             },
+          ),
+          // 前后置摄像头
+          AnimatedOpacity(
+            duration: Duration(milliseconds: 300),
+            opacity: isSwitch ? 1 : 0,
+            child: Builder(
+              builder: (BuildContext context) {
+                Icon icon;
+                if (isFront) {
+                  icon = Icon(Icons.camera_front);
+                } else {
+                  icon = Icon(Icons.camera_rear);
+                }
+                return IconButton(
+                  icon: icon,
+                  onPressed: () {
+                    isFront = !isFront;
+                    TrtcVideo.switchCamera();
+                    setState(() {});
+                  },
+                );
+              },
+            ),
           ),
           // 音频
           Builder(
