@@ -4,7 +4,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_trtc_plugin/flutter_trtc_plugin.dart';
 
 class TrtcBase {
-  static const MethodChannel _channel = const MethodChannel('flutter_trtc_plugin');
+  static const MethodChannel _channel =
+      const MethodChannel('flutter_trtc_plugin');
 
   /// 创建 TRTCCloud 单例
   static Future<void> sharedInstance() async {
@@ -17,30 +18,36 @@ class TrtcBase {
   }
 
   /// 获取UserSig
-  static Future<String> getUserSig(int sdkAppId, String secretKey, String userId) async {
-    return await _channel.invokeMethod('getUserSig', {'sdkAppId': sdkAppId, 'secretKey': secretKey, 'userId': userId});
+  static Future<String> getUserSig(
+      int sdkAppId, String secretKey, String userId) async {
+    return await _channel.invokeMethod('getUserSig',
+        {'sdkAppId': sdkAppId, 'secretKey': secretKey, 'userId': userId});
   }
 
   /// 注册回调对象
-  static void registerCallback({
-    Function(int errCode, String errMsg) onError,
-    Function(int warningCode, String warningMsg) onWarning,
-    Function(int result) onEnterRoom,
-    Function(int reason) onExitRoom,
-    Function(int errCode, String errMsg) onSwitchRole,
-    Function(String userId) onRemoteUserEnterRoom,
-    Function(String userId, int reason) onRemoteUserLeaveRoom,
-    Function(String userId, bool available) onUserVideoAvailable,
-    Function(String userId, bool available) onUserAudioAvailable,
-    Function(String userId, bool available) onUserSubStreamAvailable,
-    Function(String userId, int streamType, int width, int height) onFirstVideoFrame,
-    Function(String userId) onFirstAudioFrame,
-    Function() onConnectionLost,
-    Function() onTryToReconnect,
-    Function() onConnectionRecovery,
-    Function(TrtcUserQuality localQuality, List<TrtcUserQuality> remoteQuality) onNetworkQuality,
-    Function(int viewId) onTrtcViewClick,
-  }) async {
+  static void registerCallback(
+      {Function(int errCode, String errMsg) onError,
+      Function(int warningCode, String warningMsg) onWarning,
+      Function(int result) onEnterRoom,
+      Function(int reason) onExitRoom,
+      Function(int errCode, String errMsg) onSwitchRole,
+      Function(String userId) onRemoteUserEnterRoom,
+      Function(String userId, int reason) onRemoteUserLeaveRoom,
+      Function(String userId, bool available) onUserVideoAvailable,
+      Function(String userId, bool available) onUserAudioAvailable,
+      Function(String userId, bool available) onUserSubStreamAvailable,
+      Function(String userId, int streamType, int width, int height)
+          onFirstVideoFrame,
+      Function(String userId) onFirstAudioFrame,
+      Function() onConnectionLost,
+      Function() onTryToReconnect,
+      Function() onConnectionRecovery,
+      Function(
+              TrtcUserQuality localQuality, List<TrtcUserQuality> remoteQuality)
+          onNetworkQuality,
+      Function(int viewId) onTrtcViewClick,
+      Function(String userId, int errCode, String errMsg) onConnectOtherRoom,
+      Function(int errCode, String errMsg) onDisconnectOtherRoom}) async {
     _onError = onError;
     _onWarning = onWarning;
     _onEnterRoom = onEnterRoom;
@@ -58,10 +65,13 @@ class TrtcBase {
     _onConnectionRecovery = onConnectionRecovery;
     _onTrtcViewClick = onTrtcViewClick;
     _onNetworkQuality = onNetworkQuality;
+    _onConnectOtherRoom = onConnectOtherRoom;
+    _onDisconnectOtherRoom = onDisconnectOtherRoom;
 
     print('registerCallback 执行');
 
-    _streamSubscription = TrtcEvent.listenEvent().listen(_eventListener, onError: (error) {
+    _streamSubscription =
+        TrtcEvent.listenEvent().listen(_eventListener, onError: (error) {
       PlatformException exception = error;
       print('registerCallback error: ${exception.message}');
     });
@@ -88,6 +98,8 @@ class TrtcBase {
     _onConnectionRecovery = null;
     _onTrtcViewClick = null;
     _onNetworkQuality = null;
+    _onConnectOtherRoom = null;
+    _onDisconnectOtherRoom = null;
 
     _streamSubscription.cancel().then((_) {
       _streamSubscription = null;
@@ -178,7 +190,8 @@ class TrtcBase {
   /// [height] 画面高度
   /// 如果 userId 为 null，代表开始渲染本地采集的摄像头画面，需要您先调用 startLocalPreview 触发。
   /// 如果 userId 不为 null，代表开始渲染远程用户的首帧画面，需要您先调用 startRemoteView 触发。
-  static void Function(String userId, int streamType, int width, int height) _onFirstVideoFrame;
+  static void Function(String userId, int streamType, int width, int height)
+      _onFirstVideoFrame;
 
   /// 开始播放远程用户的首帧音频（本地声音暂不通知）
   ///
@@ -194,8 +207,27 @@ class TrtcBase {
   /// SDK 跟服务器的连接恢复
   static void Function() _onConnectionRecovery;
 
+  /// 开始跨房通话（主播PK）的结果回调
+  ///
+  /// [userId] 连麦对象用户ID
+  /// [errCode] 错误码，0代表切换成功，其他请参见
+  /// [errMsg] 错误描述
+  /// 调用 TRTCCloud 中的 connectOtherRoom() 接口会将两个不同房间中的主播拉通视频通话，也就是所谓的“主播PK”功能。
+  /// 调用者会收到 onConnectOtherRoom() 回调来获知跨房通话是否成功，
+  /// 如果成功，两个房间中的所有用户都会收到 PK 主播的 onUserVideoAvailable() 回调。
+  static void Function(String userId, int errCode, String errMsg)
+      _onConnectOtherRoom;
+
+  /// 结束跨房通话（主播 PK）的结果回调
+  ///
+  /// [errCode] 错误码，0代表切换成功，其他请参见
+  /// [errMsg] 错误描述
+  static void Function(int errCode, String errMsg) _onDisconnectOtherRoom;
+
   /// 网络质量，该回调每2秒触发一次，统计当前网络的上行和下行质量。
-  static void Function(TrtcUserQuality localQuality, List<TrtcUserQuality> remoteQuality) _onNetworkQuality;
+  static void Function(
+          TrtcUserQuality localQuality, List<TrtcUserQuality> remoteQuality)
+      _onNetworkQuality;
 
   static void Function(int viewId) _onTrtcViewClick;
 
@@ -327,15 +359,32 @@ class TrtcBase {
       case 'onNetworkQuality':
         if (_onNetworkQuality != null) {
           Map localQualityMap = args['localQuality'];
-          TrtcUserQuality localQuality = TrtcUserQuality(localQualityMap['userId'], localQualityMap['quality']);
+          TrtcUserQuality localQuality = TrtcUserQuality(
+              localQualityMap['userId'], localQualityMap['quality']);
           List<dynamic> remoteQualityList = args['remoteQuality'];
           List<TrtcUserQuality> remoteQuality = [];
-          if(remoteQualityList != null && remoteQualityList.length > 0){
+          if (remoteQualityList != null && remoteQualityList.length > 0) {
             remoteQuality = remoteQualityList.map((value) {
               return TrtcUserQuality(value['userId'], value['quality']);
             }).toList();
           }
           _onNetworkQuality(localQuality, remoteQuality);
+        }
+        break;
+
+      case 'onConnectOtherRoom':
+        if (_onConnectOtherRoom != null) {
+          String userId = args['userId'];
+          int errCode = args['errCode'];
+          String errMsg = args['errMsg'];
+          _onConnectOtherRoom(userId, errCode, errMsg);
+        }
+        break;
+      case 'onDisconnectOtherRoom':
+        if (_onDisconnectOtherRoom != null) {
+          int errCode = args['errCode'];
+          String errMsg = args['errMsg'];
+          _onDisconnectOtherRoom(errCode, errMsg);
         }
         break;
 

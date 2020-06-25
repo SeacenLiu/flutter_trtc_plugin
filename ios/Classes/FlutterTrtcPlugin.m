@@ -53,6 +53,8 @@ static NSString * const setRemoteSubStreamViewRotation = @"setRemoteSubStreamVie
 static NSString * const startPublishing = @"startPublishing";/** 开始推流 */
 static NSString * const stopPublish = @"stopPublish";/** 停止推流 */
 static NSString * const muteRemoteVideoStream = @"muteRemoteVideoStream"; /** 停止拉取远程视频 */
+static NSString * const connectOtherRoom = @"connectOtherRoom"; /** 连接其他房间 */
+static NSString * const disconnectOtherRoom = @"disconnectOtherRoom"; /** 退出其他房间 */
 
 
 @interface FlutterTrtcPlugin()<TRTCCloudDelegate,FlutterStreamHandler>
@@ -353,7 +355,16 @@ static NSString * const muteRemoteVideoStream = @"muteRemoteVideoStream"; /** �
     }else if ([stopPublish isEqualToString:call.method]) {
         [self.trtc stopPublishing];
         result(nil);
-    }else {
+    }else if([connectOtherRoom isEqualToString:call.method]) {
+        NSString *roomId = args[@"roomId"];
+        NSString *userId = args[@"userId"];
+        NSDictionary *paramDict = @{@"roomId": roomId, @"userId": userId};
+        NSString *param = [self jsonFromDict:paramDict];
+        [self.trtc connectOtherRoom:param];
+        result(nil);
+    }else if([disconnectOtherRoom isEqualToString:call.method]) {
+        [self.trtc disconnectOtherRoom];
+    } else {
         result(FlutterMethodNotImplemented);
     }
 }
@@ -544,6 +555,35 @@ static NSString * const muteRemoteVideoStream = @"muteRemoteVideoStream"; /** �
         sink(@{@"method": @{@"name": @"onUserSubStreamAvailable",@"userId":userId,@"available":@(available)}});
     }
 }
+#pragma mark - 咵房通信的连接结果监听
+- (void)onConnectOtherRoom:(NSString *)userId
+                   errCode:(TXLiteAVError)errCode
+                    errMsg:(NSString *)errMsg {
+    FlutterEventSink sink = _eventSink;
+    if (sink) {
+        sink(@{
+            @"method" : @{
+                    @"name"    : @"onConnectOtherRoom",
+                    @"userId"  : userId,
+                    @"errCode" : @(errCode),
+                    @"errMsg"  : errMsg,
+            }
+        });
+    }
+}
+#pragma mark - 跨房通话的退出结果监听
+- (void)onDisconnectOtherRoom:(TXLiteAVError)errCode errMsg:(NSString *)errMsg {
+    FlutterEventSink sink = _eventSink;
+    if(sink) {
+        sink(@{
+            @"method": @{
+                    @"name": @"onDisconnectOtherRoom",
+                    @"errCode":@(errCode),
+                    @"errMsg":errMsg
+            }
+        });
+    }
+}
 #pragma mark - FlutterStreamHandler methods
 
 - (FlutterError * _Nullable)onCancelWithArguments:(id _Nullable)arguments {
@@ -557,6 +597,15 @@ static NSString * const muteRemoteVideoStream = @"muteRemoteVideoStream"; /** �
     [[TRTCPlatformViewFactory shareInstance] setEventSink:events];
     NSLog(@"%@", [NSString stringWithFormat:@"[Flutter-Native] onListen sink: %p, object: %@", _eventSink, arguments]);
     return nil;
+}
+
+#pragma mark - tool
+- (NSString*)jsonFromDict:(NSDictionary*)dict {
+    NSError *parseError = nil;
+    NSData *jsonData = [NSJSONSerialization dataWithJSONObject:dict
+                                                       options:NSJSONWritingPrettyPrinted
+                                                         error:&parseError];
+    return [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
 }
 
 @end
