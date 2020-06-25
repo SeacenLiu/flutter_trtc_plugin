@@ -61,6 +61,8 @@ class _LivePushPageState extends State<LivePushPage> {
   LiveVideoConfig videoConfig = LiveVideoConfig(1200, "高", "高清：540*960",
       TrtcVideoResolution.TRTC_VIDEO_RESOLUTION_960_540);
 
+  String otherAnchorId = "";
+
   @override
   void initState() {
     super.initState();
@@ -158,6 +160,8 @@ class _LivePushPageState extends State<LivePushPage> {
               onTrtcViewClick: (viewId) {
                 showTips('$viewId被点击');
               },
+              onConnectOtherRoom: _onConnectOtherRoom,
+              onDisconnectOtherRoom: _onDisconnectOtherRoom,
             );
             // 打开麦克风和摄像头
             roomManager.ownerEnterRoom(widget.userId);
@@ -205,6 +209,13 @@ class _LivePushPageState extends State<LivePushPage> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
+          // PK
+          IconButton(
+            icon: Icon(Icons.play_for_work),
+            onPressed: () {
+              TrtcRoom.connectOtherRoom('12345678', '12345678');
+            },
+          ),
           // 翻转摄像头
           Builder(
             builder: (BuildContext context) {
@@ -492,5 +503,17 @@ class _LivePushPageState extends State<LivePushPage> {
 
   void _onConnectionRecovery() {
     showTips('连接已恢复...');
+  }
+
+  void _onConnectOtherRoom(String userId, int errCode, String errMsg) {
+    // TODO: - PK
+    print("_onConnectOtherRoom userId: $userId, errCode: $errCode, errMsg: $errMsg");
+    showTips("_onConnectOtherRoom userId: $userId, errCode: $errCode, errMsg: $errMsg");
+  }
+
+  void _onDisconnectOtherRoom(int errCode, String errMsg) {
+    // TODO: - PK
+    print("_onDisconnectOtherRoom errCode: $errCode, errMsg: $errMsg");
+    showTips("_onDisconnectOtherRoom errCode: $errCode, errMsg: $errMsg");
   }
 }

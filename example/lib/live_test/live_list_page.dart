@@ -47,7 +47,8 @@ class _LiveListPageState extends State<LiveListPage> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (BuildContext context) {
-                    return LivePushPage(roomId: "12345678", userId: "12345678");
+                    // return LivePushPage(roomId: "12345678", userId: "12345678");
+                    return LivePushPage(roomId: "87654321", userId: "87654321");
                   }),
                 );
               },

@@ -268,7 +268,6 @@ class _LivePlayPageState extends State<LivePlayPage> {
         (remoteVideoViews[roomOwner] != null && remoteVideoViews.length > 1) ||
         (remoteVideoViews[roomOwner] == null && remoteVideoViews.length > 0)) {
       List<Widget> views = List();
-      print('123');
       if (localVideoView != null) {
         views.add(_remoteVideoView(localVideoView));
       }

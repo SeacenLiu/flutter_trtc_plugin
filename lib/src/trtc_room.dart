@@ -50,4 +50,14 @@ class TrtcRoom {
   static Future<void> switchRole(int role) async {
     return await _channel.invokeMethod('switchRole');
   }
+
+  /// 请求跨房通话（主播 PK）
+  static Future<void> connectOtherRoom(String roomId, String userId) async {
+    return await _channel.invokeMethod('connectOtherRoom', {'roomId': roomId, 'userId': userId});
+  }
+
+  /// 退出跨房通话
+  static Future<void> disconnectOtherRoom() async {
+    return await _channel.invokeMethod('disconnectOtherRoom');
+  }
 }

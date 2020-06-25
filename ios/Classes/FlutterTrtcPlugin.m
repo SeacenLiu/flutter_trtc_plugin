@@ -358,12 +358,16 @@ static NSString * const disconnectOtherRoom = @"disconnectOtherRoom"; /** 退出
     }else if([connectOtherRoom isEqualToString:call.method]) {
         NSString *roomId = args[@"roomId"];
         NSString *userId = args[@"userId"];
-        NSDictionary *paramDict = @{@"roomId": roomId, @"userId": userId};
-        NSString *param = [self jsonFromDict:paramDict];
-        [self.trtc connectOtherRoom:param];
+        NSMutableDictionary * jsonDict = [[NSMutableDictionary alloc] init];
+        [jsonDict setObject:roomId forKey:@"strRoomId"];
+        [jsonDict setObject:userId forKey:@"userId"];
+        NSData* jsonData = [NSJSONSerialization dataWithJSONObject:jsonDict options:NSJSONWritingPrettyPrinted error:nil];
+        NSString* jsonString = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
+        [self.trtc connectOtherRoom:jsonString];
         result(nil);
     }else if([disconnectOtherRoom isEqualToString:call.method]) {
         [self.trtc disconnectOtherRoom];
+        result(nil);
     } else {
         result(FlutterMethodNotImplemented);
     }
@@ -597,15 +601,6 @@ static NSString * const disconnectOtherRoom = @"disconnectOtherRoom"; /** 退出
     [[TRTCPlatformViewFactory shareInstance] setEventSink:events];
     NSLog(@"%@", [NSString stringWithFormat:@"[Flutter-Native] onListen sink: %p, object: %@", _eventSink, arguments]);
     return nil;
-}
-
-#pragma mark - tool
-- (NSString*)jsonFromDict:(NSDictionary*)dict {
-    NSError *parseError = nil;
-    NSData *jsonData = [NSJSONSerialization dataWithJSONObject:dict
-                                                       options:NSJSONWritingPrettyPrinted
-                                                         error:&parseError];
-    return [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
 }
 
 @end
