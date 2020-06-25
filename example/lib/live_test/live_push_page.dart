@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_trtc_plugin/flutter_trtc_plugin.dart';
+import 'package:flutter_trtc_plugin_example/live_test/live_anchor_pk_panel.dart';
 import 'package:flutter_trtc_plugin_example/live_test/live_room_manager.dart';
 import 'package:flutter_trtc_plugin_example/live_test/live_sub_video_view.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -210,10 +211,33 @@ class _LivePushPageState extends State<LivePushPage> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
           // PK
-          IconButton(
-            icon: Icon(Icons.play_for_work),
-            onPressed: () {
-              TrtcRoom.connectOtherRoom('12345678', '12345678');
+          Builder(
+            builder: (BuildContext context) {
+              if (otherAnchorId.isEmpty) {
+                return IconButton(
+                  icon: Icon(Icons.call),
+                  onPressed: () {
+                    showBottomSheet(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return LiveAnchorPKPanel(
+                          onSelectRoom: (String roomId, String userId) {
+                            TrtcRoom.connectOtherRoom(roomId, userId);
+                            Navigator.pop(context);
+                          },
+                        );
+                      },
+                    );
+                  },
+                );
+              } else {
+                return IconButton(
+                  icon: Icon(Icons.call_end),
+                  onPressed: () {
+                    TrtcRoom.disconnectOtherRoom();
+                  },
+                );
+              }
             },
           ),
           // 翻转摄像头
@@ -506,14 +530,20 @@ class _LivePushPageState extends State<LivePushPage> {
   }
 
   void _onConnectOtherRoom(String userId, int errCode, String errMsg) {
-    // TODO: - PK
-    print("_onConnectOtherRoom userId: $userId, errCode: $errCode, errMsg: $errMsg");
-    showTips("_onConnectOtherRoom userId: $userId, errCode: $errCode, errMsg: $errMsg");
+    print(
+        "_onConnectOtherRoom userId: $userId, errCode: $errCode, errMsg: $errMsg");
+    showTips(
+        "_onConnectOtherRoom userId: $userId, errCode: $errCode, errMsg: $errMsg");
+        if (errCode == 0) {
+          otherAnchorId = userId;
+        }
   }
 
   void _onDisconnectOtherRoom(int errCode, String errMsg) {
-    // TODO: - PK
     print("_onDisconnectOtherRoom errCode: $errCode, errMsg: $errMsg");
     showTips("_onDisconnectOtherRoom errCode: $errCode, errMsg: $errMsg");
+    if (errCode == 0) {
+      otherAnchorId = "";
+    }
   }
 }
