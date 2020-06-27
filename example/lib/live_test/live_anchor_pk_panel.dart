@@ -28,23 +28,16 @@ class _LiveAnchorPKPanelState extends State<LiveAnchorPKPanel> {
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      child: Builder(
-        builder: (BuildContext context) {
-          if (listRoom == null) {
-            return Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              height: 200,
-              child: Container(color: Colors.blue),
-            );
-          } else {
-            return Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              height: 200,
-              child: ListView.builder(
+      child: Container(
+        height: 300,
+        child: Builder(
+          builder: (BuildContext context) {
+            if (listRoom == null) {
+              return Container(
+                color: Colors.white,
+              );
+            } else {
+              return ListView.builder(
                 itemCount: listRoom.data.length,
                 itemExtent: 50.0, //强制高度为50.0
                 itemBuilder: (BuildContext context, int index) {
@@ -63,10 +56,10 @@ class _LiveAnchorPKPanelState extends State<LiveAnchorPKPanel> {
                     ),
                   );
                 },
-              ),
-            );
-          }
-        },
+              );
+            }
+          },
+        ),
       ),
     );
   }

@@ -72,7 +72,7 @@ class _LivePushPageState extends State<LivePushPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      // backgroundColor: Colors.transparent,
       body: Stack(
         children: <Widget>[
           // Render
@@ -217,7 +217,7 @@ class _LivePushPageState extends State<LivePushPage> {
                 return IconButton(
                   icon: Icon(Icons.call),
                   onPressed: () {
-                    showBottomSheet(
+                    showModalBottomSheet(
                       context: context,
                       builder: (BuildContext context) {
                         return LiveAnchorPKPanel(
