@@ -11,6 +11,14 @@ class LiveListPage extends StatefulWidget {
 class _LiveListPageState extends State<LiveListPage> {
   RoomListRespObject listRoom = null;
 
+  TextEditingController editingController =
+      TextEditingController(text: "1");
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -39,6 +47,15 @@ class _LiveListPageState extends State<LiveListPage> {
             child: _liveList(),
           ),
           Positioned(
+            bottom: 50,
+            left: 0,
+            right: 0,
+            child: TextField(
+              controller: editingController,
+              textAlign: TextAlign.center,
+            ),
+          ),
+          Positioned(
             bottom: 0,
             left: 0,
             right: 0,
@@ -47,8 +64,8 @@ class _LiveListPageState extends State<LiveListPage> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (BuildContext context) {
-                    // return LivePushPage(roomId: "12345678", userId: "12345678");
-                    return LivePushPage(roomId: "87654321", userId: "87654321");
+                    String userId = editingController.text;
+                    return LivePushPage(roomId: userId, userId: userId);
                   }),
                 );
               },

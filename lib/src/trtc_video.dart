@@ -7,7 +7,7 @@ import 'package:flutter_trtc_plugin/flutter_trtc_plugin.dart';
 
 class TrtcVideoView extends StatefulWidget {
   final String userId;
-  int viewId = 0;
+  int viewId = -1;
   final void Function(int viewId) onViewCreated;
 
   TrtcVideoView({Key key, this.userId, this.onViewCreated}) : super(key: key);
@@ -17,17 +17,41 @@ class TrtcVideoView extends StatefulWidget {
 }
 
 class _TrtcVideoViewState extends State<TrtcVideoView> {
+
+  Widget platformView = null;
+  
   @override
-  Widget build(BuildContext context) {
+  void deactivate() {
+    super.deactivate();
+    print("_TrtcVideoViewState deactivate");
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    print("_TrtcVideoViewState dispose");
+  }
+
+  @override
+  void initState() {
+    platformView = createPlatform();
+    super.initState();
+  }
+
+  Widget createPlatform() {
     if (Platform.isIOS) {
       return UiKitView(
           key: ObjectKey(widget.userId),
           viewType: 'flutter_trtc_plugin/view',
+          creationParams: <String, dynamic>{"origin": widget.viewId},//widget.viewId,
+          creationParamsCodec: const StandardMessageCodec(),
           onPlatformViewCreated: (int viewId) {
-            widget.viewId = viewId;
-            if (widget.onViewCreated != null) {
+            int origin = widget.viewId;
+            print("origin view id: $origin");
+            if (widget.viewId < 0 && widget.onViewCreated != null) {
               widget.onViewCreated(viewId);
             }
+            widget.viewId = viewId;
           });
     } else if (Platform.isAndroid) {
       return AndroidView(
@@ -42,6 +66,12 @@ class _TrtcVideoViewState extends State<TrtcVideoView> {
       );
     }
     return Center(child: Text('界面创建失败'));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    print("TrtcVideoView build");
+    return platformView;
   }
 }
 

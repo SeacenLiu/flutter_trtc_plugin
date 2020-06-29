@@ -72,7 +72,7 @@ class _LivePushPageState extends State<LivePushPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // backgroundColor: Colors.transparent,
+      backgroundColor: Colors.grey,
       body: Stack(
         children: <Widget>[
           // Render
@@ -167,11 +167,23 @@ class _LivePushPageState extends State<LivePushPage> {
             // 打开麦克风和摄像头
             roomManager.ownerEnterRoom(widget.userId);
             TrtcAudio.startLocalAudio();
-            localVideoView = TrtcVideo.createPlatformView(userId, (viewId) {
-              TrtcVideo.setLocalViewFillMode(
-                  TrtcVideoRenderMode.TRTC_VIDEO_RENDER_MODE_FILL);
-              TrtcVideo.startLocalPreview(true, viewId);
-            });
+            // localVideoView = TrtcVideo.createPlatformView(userId, (viewId) {
+            //   // createPlatformView 中的闭包不应该多次调用！！！
+            // TrtcVideo.setLocalViewFillMode(
+            //     TrtcVideoRenderMode.TRTC_VIDEO_RENDER_MODE_FILL);
+            // print("TrtcVideo create: $viewId");
+            // // TrtcVideo.stopLocalPreview();
+            // TrtcVideo.startLocalPreview(true, viewId);
+            // });
+            localVideoView = TrtcVideoView(
+                userId: userId,
+                onViewCreated: (viewId) {
+                  TrtcVideo.setLocalViewFillMode(
+                      TrtcVideoRenderMode.TRTC_VIDEO_RENDER_MODE_FILL);
+                  print("TrtcVideo create: $viewId");
+                  TrtcVideo.stopLocalPreview();
+                  TrtcVideo.startLocalPreview(true, viewId);
+                });
             setState(() {});
           },
         ),
@@ -197,6 +209,13 @@ class _LivePushPageState extends State<LivePushPage> {
           icon: Icon(Icons.stop),
           onPressed: () {
             _leaveLive();
+          },
+        ),
+        IconButton(
+          icon: Icon(Icons.ac_unit),
+          onPressed: () {
+            _testLocalView = !_testLocalView;
+            setState(() {});
           },
         ),
       ],
@@ -358,14 +377,69 @@ class _LivePushPageState extends State<LivePushPage> {
     );
   }
 
+  bool _testLocalView = false;
   // 渲染组件
   Widget _localVideoWidget() {
-    if (localVideoView == null) {
-      return SizedBox();
+    if (otherAnchorId.isEmpty) {
+      // 一般预览
+      if (localVideoView == null) {
+        print("localVideoView 为空");
+        return SizedBox();
+      } else { // 193442512
+        if (_testLocalView) {
+          double windowWidth =
+              window.physicalSize.width / window.devicePixelRatio;
+          double width = windowWidth * 0.5;
+          double height =
+              window.physicalSize.height * width / window.physicalSize.width;
+          return SafeArea(
+            child: Stack(
+              children: <Widget>[
+                Positioned(
+                  top: 55,
+                  left: 0,
+                  width: width,
+                  height: height,
+                  child: localVideoView,
+                ),
+              ],
+            ),
+          );
+        } else {
+          return Container(
+            child: localVideoView,
+          );
+        }
+      }
     } else {
-      return Container(
-        child: localVideoView,
-      );
+      // PK 界面
+      if (localVideoView == null) {
+        return SizedBox();
+      } else {
+        double windowWidth =
+            window.physicalSize.width / window.devicePixelRatio;
+        double width = windowWidth * 0.5;
+        double height =
+            window.physicalSize.height * width / window.physicalSize.width;
+        return Stack(
+          children: <Widget>[
+            Positioned(
+              top: 0,
+              left: 0,
+              width: width,
+              height: height,
+              child: localVideoView,
+            ),
+            Positioned(
+              top: 0,
+              right: 0,
+              width: width,
+              height: height,
+              child: remoteVideoViews[otherAnchorId],
+            ),
+          ],
+        );
+      }
     }
   }
 
@@ -376,10 +450,12 @@ class _LivePushPageState extends State<LivePushPage> {
       List<Widget> views = List();
       remoteVideoViews.forEach(
         (key, value) {
-          views.add(_remoteVideoView(value));
+          if (key != otherAnchorId) {
+            views.add(_remoteVideoView(value));
+          }
         },
       );
-      // - 16 - 90 - x - 90 - 16 -
+      // - 16 - 90 - x - 90 - 16 - => 212
       double crossAxisSpacing =
           (window.physicalSize.width / window.devicePixelRatio) - 212;
       return GridView.count(
@@ -491,6 +567,7 @@ class _LivePushPageState extends State<LivePushPage> {
         remoteVideoViews[userId] = TrtcVideo.createPlatformView(
           userId,
           (viewID) {
+            print("remote view create $viewID");
             TrtcVideo.setRemoteViewFillMode(
                 userId, TrtcVideoRenderMode.TRTC_VIDEO_RENDER_MODE_FILL);
             TrtcVideo.startRemoteView(userId, viewID);
@@ -534,16 +611,16 @@ class _LivePushPageState extends State<LivePushPage> {
         "_onConnectOtherRoom userId: $userId, errCode: $errCode, errMsg: $errMsg");
     showTips(
         "_onConnectOtherRoom userId: $userId, errCode: $errCode, errMsg: $errMsg");
-        if (errCode == 0) {
-          otherAnchorId = userId;
-        }
+    // if (errCode == 0) {
+    otherAnchorId = userId;
+    // }
   }
 
   void _onDisconnectOtherRoom(int errCode, String errMsg) {
     print("_onDisconnectOtherRoom errCode: $errCode, errMsg: $errMsg");
     showTips("_onDisconnectOtherRoom errCode: $errCode, errMsg: $errMsg");
-    if (errCode == 0) {
-      otherAnchorId = "";
-    }
+    // if (errCode == 0) {
+    otherAnchorId = "";
+    // }
   }
 }
